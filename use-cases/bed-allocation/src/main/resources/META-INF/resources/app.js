@@ -83,15 +83,19 @@ function setupAjax() {
 }
 
 function refreshSchedule() {
-    let path = "/schedules/" + scheduleId;
+    let path = "/v1/bed-allocations/" + scheduleId;
     if (scheduleId === null) {
-        path = "/demo-data";
+        path = "/v1/demo-data/SMALL";
     }
 
     $.getJSON(path, function (schedule) {
         loadedSchedule = schedule;
         $('#exportData').attr('href', 'data:text/plain;charset=utf-8,' + JSON.stringify(loadedSchedule));
-        renderSchedule(schedule);
+        if (scheduleId === null) {
+        	renderSchedule(schedule.modelInput,schedule.modelInput);
+        } else {
+			renderSchedule(schedule.modelOutput, schedule.run);
+		}
     })
         .fail(function (xhr, ajaxOptions, thrownError) {
             showError("Getting the schedule has failed.", xhr);
@@ -99,9 +103,9 @@ function refreshSchedule() {
         });
 }
 
-function renderSchedule(schedule) {
-    refreshSolvingButtons(schedule.solverStatus != null && schedule.solverStatus !== "NOT_SOLVING");
-    $("#score").text("Score: " + (schedule.score == null ? "?" : schedule.score));
+function renderSchedule(schedule, run) {
+    refreshSolvingButtons(run.solverStatus != null && run.solverStatus === "SOLVING_ACTIVE");
+    $("#score").text("Score: " + (run.score == null ? "?" : run.score));
 
     if (viewType === "R") {
         renderScheduleByRoom(schedule);
@@ -179,7 +183,7 @@ function renderScheduleByRoom(schedule) {
 
             const color = stay.patientGender == 'MALE' ? '#729FCF' : '#FCE94F';
             unassignedPatients.append($(`<div class="col"/>`).append($(`<div class="card" style="background-color: ${color}"/>`).append(unassignedPatientElement)));
-            console.log(stay)
+            
             byRoomItemData.add({
                 id: stay.id,
                 group: stay.id,
@@ -234,8 +238,8 @@ function renderScheduleByRoom(schedule) {
 }
 
 function solve() {
-    $.post("/schedules", JSON.stringify(loadedSchedule), function (data) {
-        scheduleId = data;
+    $.post("/v1/bed-allocations", JSON.stringify(loadedSchedule), function (data) {
+        scheduleId = data.id;
         refreshSolvingButtons(true);
     }).fail(function (xhr, ajaxOptions, thrownError) {
         showError("Start solving failed.", xhr);
@@ -251,7 +255,7 @@ function analyze() {
         scoreAnalysisModalContent.text("No score to analyze yet, please first press the 'solve' button.");
     } else {
         $('#scoreAnalysisScoreLabel').text(`(${loadedSchedule.score})`);
-        $.put("/schedules/analyze", JSON.stringify(loadedSchedule), function (scoreAnalysis) {
+        $.put("/v1/bed-allocations/score-analysis", JSON.stringify(loadedSchedule), function (scoreAnalysis) {
             let constraints = scoreAnalysis.constraints;
             constraints.sort((a, b) => {
                 let aComponents = getScoreComponents(a.score), bComponents = getScoreComponents(b.score);
@@ -317,18 +321,6 @@ function analyze() {
     }
 }
 
-function publish() {
-    $("#publishButton").hide();
-    $("#publishLoadingButton").show();
-    $.put(`/schedules/${scheduleId}/publish`, function (schedule) {
-        loadedSchedule = schedule;
-        renderSchedule(schedule);
-    })
-        .fail(function (xhr, ajaxOptions, thrownError) {
-            showError("Publish failed.", xhr);
-            refreshSolvingButtons(false);
-        });
-}
 
 function getScoreComponents(score) {
     let components = {hard: 0, medium: 0, soft: 0};
@@ -358,9 +350,9 @@ function refreshSolvingButtons(solving) {
 }
 
 function stopSolving() {
-    $.delete("/schedules/" + scheduleId, function () {
+    $.delete("/v1/bed-allocations/" + scheduleId, function(schedule) {
         refreshSolvingButtons(false);
-        refreshSchedule();
+        refreshSchedule();        
     }).fail(function (xhr, ajaxOptions, thrownError) {
         showError("Stop solving failed.", xhr);
     });

@@ -16,17 +16,27 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import jakarta.enterprise.context.ApplicationScoped;
+
+import ai.timefold.models.sdk.api.data.GeneratedDemoData;
+import ai.timefold.models.sdk.api.domain.ModelRequest;
 
 import org.acme.bedallocation.domain.Bed;
 import org.acme.bedallocation.domain.BedPlan;
 import org.acme.bedallocation.domain.Department;
 import org.acme.bedallocation.domain.Room;
 import org.acme.bedallocation.domain.Stay;
+import org.acme.bedallocation.model.BedPlanConstraintConfiguration;
 
 @ApplicationScoped
-public class DemoDataGenerator {
+public class DemoDataGenerator implements ai.timefold.models.sdk.api.data.DemoDataGenerator {
+
+    public enum DemoData {
+        SMALL,
+        LARGE
+    }
 
     private static final List<String> SPECIALTIES = List.of("Specialty1", "Specialty2", "Specialty3");
     private static final String TELEMETRY = "telemetry";
@@ -36,7 +46,18 @@ public class DemoDataGenerator {
     private static final List<String> EQUIPMENTS = List.of(TELEMETRY, TELEVISION, OXYGEN, NITROGEN);
     private final Random random = new Random(0);
 
-    public BedPlan generateDemoData() {
+    public ModelRequest<BedPlan, BedPlanConstraintConfiguration> generateDemoData(DemoData demoData) {
+        return new ModelRequest<BedPlan, BedPlanConstraintConfiguration>(null, sgenerateDemoData());
+    }
+
+    @Override
+    public List<GeneratedDemoData> generateDemoData() {
+        return Stream.of(DemoData.values()).map(demoData -> new GeneratedDemoData(
+                demoData.name(), generateDemoData(demoData)))
+                .toList();
+    }
+
+    public BedPlan sgenerateDemoData() {
         BedPlan schedule = new BedPlan();
         // Department
         List<Department> departments = List.of(new Department("1", "Department"));

@@ -7,101 +7,101 @@ import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 
-import ai.timefold.solver.core.api.solver.SolverStatus;
+import ai.timefold.models.sdk.api.SolvingStatus;
 
 import org.acme.bedallocation.domain.BedPlan;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.RestAssured;
+import io.restassured.config.ObjectMapperConfig;
+import io.restassured.config.RestAssuredConfig;
 import io.restassured.http.ContentType;
 
 @QuarkusTest
 class BedSchedulingResourceTest {
 
+    @BeforeAll
+    public static void configure() {
+        // required as default RestAssured object mapper serializes LocalDate as an array and by that fails schema validation
+        ObjectMapper mapper =
+                new ObjectMapper().findAndRegisterModules().disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        RestAssured.config = RestAssuredConfig.config().objectMapperConfig(new ObjectMapperConfig().jackson2ObjectMapperFactory(
+                (aClass, s) -> {
+                    return mapper;
+                }));
+    }
+
     @Test
     void solveDemoDataUntilFeasible() {
-        BedPlan schedule = given()
-                .when().get("/demo-data")
+        String scheduleJson = given()
+                .when().get("/v1/demo-data/SMALL")
                 .then()
-                .statusCode(200)
-                .extract()
-                .as(BedPlan.class);
+                .statusCode(200).extract().body().asPrettyString();
 
         String jobId = given()
                 .contentType(ContentType.JSON)
-                .body(schedule)
-                .expect().contentType(ContentType.TEXT)
-                .when().post("/schedules")
+                .body(scheduleJson)
+                .when().post("/v1/bed-allocations")
                 .then()
-                .statusCode(200)
+                .log().all()
+                .statusCode(202)
                 .extract()
-                .asString();
+                .body().path("id");
 
         await()
                 .atMost(Duration.ofMinutes(1))
                 .pollInterval(Duration.ofMillis(500L))
-                .until(() -> SolverStatus.NOT_SOLVING.name().equals(
-                        get("/schedules/" + jobId + "/status")
+                .until(() -> SolvingStatus.SOLVING_COMPLETED.name().equals(
+                        get("/v1/bed-allocations/" + jobId + "/run")
                                 .jsonPath().get("solverStatus")));
 
-        BedPlan solution = get("/schedules/" + jobId).then().extract().as(BedPlan.class);
-        assertThat(solution.getSolverStatus()).isEqualTo(SolverStatus.NOT_SOLVING);
+        BedPlan solution =
+                get("/v1/bed-allocations/" + jobId).then().extract().jsonPath().getObject("modelOutput", BedPlan.class);
         assertThat(solution.getStays().stream().allMatch(bedDesignation -> bedDesignation.getBed() != null)).isTrue();
         assertThat(solution.getScore().isFeasible()).isTrue();
     }
 
     @Test
     void analyze() {
-        BedPlan schedule = given()
-                .when().get("/demo-data")
+        String scheduleJson = given()
+                .when().get("/v1/demo-data/SMALL")
                 .then()
-                .statusCode(200)
-                .extract()
-                .as(BedPlan.class);
+                .statusCode(200).extract().body().asPrettyString();
 
         String jobId = given()
                 .contentType(ContentType.JSON)
-                .body(schedule)
-                .expect().contentType(ContentType.TEXT)
-                .when().post("/schedules")
+                .body(scheduleJson)
+                .when().post("/v1/bed-allocations")
                 .then()
-                .statusCode(200)
+                .statusCode(202)
                 .extract()
-                .asString();
+                .body().path("id");
 
         await()
                 .atMost(Duration.ofMinutes(1))
                 .pollInterval(Duration.ofMillis(500L))
-                .until(() -> SolverStatus.NOT_SOLVING.name().equals(
-                        get("/schedules/" + jobId + "/status")
+                .until(() -> SolvingStatus.SOLVING_COMPLETED.name().equals(
+                        get("/v1/bed-allocations/" + jobId + "/run")
                                 .jsonPath().get("solverStatus")));
 
-        BedPlan solution = get("/schedules/" + jobId).then().extract().as(BedPlan.class);
+        String solutionJson = get("/v1/bed-allocations/" + jobId).then().extract().body().asPrettyString();
 
         String analysis = given()
                 .contentType(ContentType.JSON)
-                .body(solution)
-                .expect().contentType(ContentType.JSON)
+                .body(solutionJson)
                 .when()
-                .put("/schedules/analyze")
+                .put("/v1/bed-allocations/score-analysis")
                 .then()
                 .extract()
                 .asString();
         // There are too many constraints to validate
         assertThat(analysis).isNotNull();
-
-        String analysis2 = given()
-                .contentType(ContentType.JSON)
-                .queryParam("fetchPolicy", "FETCH_SHALLOW")
-                .body(solution)
-                .expect().contentType(ContentType.JSON)
-                .when()
-                .put("/schedules/analyze")
-                .then()
-                .extract()
-                .asString();
-        // There are too many constraints to validate
-        assertThat(analysis2).isNotNull();
     }
 
 }

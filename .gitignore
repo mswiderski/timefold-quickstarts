@@ -13,6 +13,9 @@ build
 *.ipr
 *.iws
 *.iml
+.settings
+.classpath
+.project
 
 # Repository wide ignore mac DS_Store files
 .DS_Store
