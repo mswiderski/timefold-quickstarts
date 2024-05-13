@@ -1,4 +1,4 @@
-package org.acme.bedallocation.rest;
+package org.acme.bedallocation.demo;
 
 import static java.time.temporal.TemporalAdjusters.firstInMonth;
 import static org.acme.bedallocation.domain.Gender.FEMALE;
@@ -20,15 +20,16 @@ import java.util.stream.Stream;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
+import ai.timefold.models.sdk.api.ModelInput;
 import ai.timefold.models.sdk.api.data.GeneratedDemoData;
 import ai.timefold.models.sdk.api.domain.ModelRequest;
+import ai.timefold.quarkus.models.sdk.defaults.EmptyModelConfigOverrides;
 
 import org.acme.bedallocation.domain.Bed;
 import org.acme.bedallocation.domain.BedPlan;
 import org.acme.bedallocation.domain.Department;
 import org.acme.bedallocation.domain.Room;
 import org.acme.bedallocation.domain.Stay;
-import org.acme.bedallocation.model.BedPlanConstraintConfiguration;
 
 @ApplicationScoped
 public class DemoDataGenerator implements ai.timefold.models.sdk.api.data.DemoDataGenerator {
@@ -46,8 +47,8 @@ public class DemoDataGenerator implements ai.timefold.models.sdk.api.data.DemoDa
     private static final List<String> EQUIPMENTS = List.of(TELEMETRY, TELEVISION, OXYGEN, NITROGEN);
     private final Random random = new Random(0);
 
-    public ModelRequest<BedPlan, BedPlanConstraintConfiguration> generateDemoData(DemoData demoData) {
-        return new ModelRequest<BedPlan, BedPlanConstraintConfiguration>(null, sgenerateDemoData());
+    public ModelRequest<BedPlan, EmptyModelConfigOverrides> generateDemoData(DemoData demoData) {
+        return new ModelRequest<BedPlan, EmptyModelConfigOverrides>(null, sgenerateDemoData());
     }
 
     @Override
@@ -355,5 +356,20 @@ public class DemoDataGenerator implements ai.timefold.models.sdk.api.data.DemoDa
     }
 
     private record Pair<K, V>(K key, V value) {
+    }
+
+    @Override
+    public List<String> demoDataNames() {
+        return Stream.of(DemoData.values()).map(DemoData::name).toList();
+    }
+
+    @Override
+    public ModelRequest<?, ?> generateDemoData(String demoData) {
+        return generateDemoData(DemoData.valueOf(demoData));
+    }
+
+    @Override
+    public ModelInput generateModelInput(String demoData) {
+        return generateDemoData(DemoData.valueOf(demoData)).modelInput();
     }
 }

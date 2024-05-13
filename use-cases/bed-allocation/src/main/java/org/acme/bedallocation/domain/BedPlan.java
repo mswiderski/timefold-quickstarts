@@ -5,6 +5,7 @@ import java.util.List;
 import ai.timefold.models.sdk.api.ModelInput;
 import ai.timefold.models.sdk.api.ModelOutput;
 import ai.timefold.models.sdk.api.SolverModel;
+import ai.timefold.quarkus.models.sdk.defaults.EmptyModelKpi;
 import ai.timefold.solver.core.api.domain.solution.PlanningEntityCollectionProperty;
 import ai.timefold.solver.core.api.domain.solution.PlanningScore;
 import ai.timefold.solver.core.api.domain.solution.PlanningSolution;
@@ -13,14 +14,12 @@ import ai.timefold.solver.core.api.domain.valuerange.ValueRangeProvider;
 import ai.timefold.solver.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
 import ai.timefold.solver.core.api.solver.SolverStatus;
 
-import org.acme.bedallocation.model.BedPlanKpis;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @PlanningSolution
-public class BedPlan implements ModelInput, ModelOutput, SolverModel<HardMediumSoftScore, BedPlanKpis> {
+public class BedPlan implements ModelInput, ModelOutput, SolverModel<HardMediumSoftScore, EmptyModelKpi> {
 
     @ProblemFactCollectionProperty
     private List<Department> departments;
@@ -116,7 +115,7 @@ public class BedPlan implements ModelInput, ModelOutput, SolverModel<HardMediumS
 
     @JsonIgnore
     @Override
-    public BedPlanKpis getKpis() {
+    public EmptyModelKpi getKpis() {
         return null;
     }
 
