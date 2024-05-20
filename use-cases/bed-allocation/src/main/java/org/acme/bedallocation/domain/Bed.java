@@ -4,6 +4,8 @@ import java.util.Objects;
 
 import ai.timefold.solver.core.api.domain.lookup.PlanningId;
 
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
@@ -12,6 +14,7 @@ public class Bed {
 
     @PlanningId
     private String id;
+    @Schema(nullable = true, implementation = String.class)
     private Room room;
     private int indexInRoom;
 

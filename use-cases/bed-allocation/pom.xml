@@ -12,13 +12,16 @@
 		<maven.compiler.release>17</maven.compiler.release>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-		<version.io.quarkus.platform>3.8.3</version.io.quarkus.platform>
-		<version.ai.timefold.solver>1.9.0</version.ai.timefold.solver>
+		<version.io.quarkus.platform>3.9.5</version.io.quarkus.platform>
+		<version.ai.timefold.solver>1.10.0</version.ai.timefold.solver>
 		<version.ai.timefold.models>999-SNAPSHOT</version.ai.timefold.models>
 
 		<version.compiler.plugin>3.13.0</version.compiler.plugin>
 		<version.resources.plugin>3.3.1</version.resources.plugin>
 		<version.surefire.plugin>3.2.5</version.surefire.plugin>
+		<version.install.plugin>3.1.2</version.install.plugin>
+		
+		<model.api.version>v1</model.api.version>
 	</properties>
 
 	<dependencyManagement>
@@ -41,10 +44,6 @@
 	</dependencyManagement>
 
 	<dependencies>
-		<dependency>
-			<groupId>ai.timefold.models</groupId>
-			<artifactId>timefold-model</artifactId>
-		</dependency>
 
 		<!-- Testing -->
 		<dependency>
@@ -133,6 +132,11 @@
 				<artifactId>quarkus-maven-plugin</artifactId>
 				<version>${version.io.quarkus.platform}</version>
 				<extensions>true</extensions>
+				<configuration>
+					<properties>
+						<model.api.version>${model.api.version}</model.api.version>
+					</properties>
+				</configuration>
 				<executions>
 					<execution>
 						<goals>
@@ -153,6 +157,35 @@
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>
+			      <plugin>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>${version.install.plugin}</version>
+        <configuration>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>${project.artifactId}-descriptor</artifactId>
+          <classifier>${model.api.version}</classifier>
+          <version>${project.version}</version>
+          <file>${project.build.directory}/model-descriptor.jar</file>
+          <packaging>jar</packaging>
+          <generatePom>true</generatePom>
+        </configuration>
+        <executions>
+          <execution>
+            <id>install-timefold-package</id>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+           <execution>
+            <id>install-timefold-verify</id>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <phase>verify</phase>
+          </execution>
+        </executions>
+      </plugin>  
 		</plugins>
 	</build>
 
@@ -194,6 +227,18 @@
 				<quarkus.profile>native</quarkus.profile>
 			</properties>
 		</profile>
+	    <profile>
+	      <id>default-profile</id>
+	      <activation>
+	        <activeByDefault>true</activeByDefault>
+	      </activation>
+	      <dependencies>
+			<dependency>
+				<groupId>ai.timefold.models</groupId>
+				<artifactId>timefold-model</artifactId>
+			</dependency>
+	      </dependencies>
+	    </profile>		
 		<profile>
 			<id>container</id>
 			<activation>
@@ -213,7 +258,7 @@
 			</properties>
 		</profile>
 		<profile>
-			<id>fs-profile</id>
+			<id>fs-storage</id>
 			<dependencyManagement>
 				<dependencies>
 					<dependency>
@@ -235,10 +280,17 @@
 			<dependencies>
 				<dependency>
 					<groupId>ai.timefold.models.enterprise</groupId>
+					<artifactId>timefold-model-enterprise</artifactId>
+				</dependency>				
+				<dependency>
+					<groupId>ai.timefold.models.enterprise</groupId>
 					<artifactId>timefold-models-sdk-enterprise-storage-fs</artifactId>
 				</dependency>
 			</dependencies>
-		</profile>
+			<properties>
+				<quarkus.profile>fs-storage</quarkus.profile>
+			</properties>
+		</profile>		
 		<profile>
 			<id>s3-storage</id>
 			<activation>
@@ -265,6 +317,10 @@
 				</dependencies>
 			</dependencyManagement>
 			<dependencies>
+				<dependency>
+					<groupId>ai.timefold.models.enterprise</groupId>
+					<artifactId>timefold-model-enterprise</artifactId>
+				</dependency>
 				<dependency>
 					<groupId>ai.timefold.models.enterprise</groupId>
 					<artifactId>timefold-models-sdk-enterprise-storage-s3</artifactId>
@@ -317,6 +373,10 @@
 			<dependencies>
 				<dependency>
 					<groupId>ai.timefold.models.enterprise</groupId>
+					<artifactId>timefold-model-enterprise</artifactId>
+				</dependency>
+				<dependency>
+					<groupId>ai.timefold.models.enterprise</groupId>
 					<artifactId>timefold-models-sdk-enterprise-storage-gcs</artifactId>
 				</dependency>
 			</dependencies>
@@ -365,6 +425,10 @@
 				</dependencies>
 			</dependencyManagement>
 			<dependencies>
+				<dependency>
+					<groupId>ai.timefold.models.enterprise</groupId>
+					<artifactId>timefold-model-enterprise</artifactId>
+				</dependency>				
 				<dependency>
 					<groupId>ai.timefold.models.enterprise</groupId>
 					<artifactId>timefold-models-sdk-enterprise-storage-azure</artifactId>

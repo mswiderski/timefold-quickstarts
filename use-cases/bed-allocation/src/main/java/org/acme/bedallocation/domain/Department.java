@@ -8,6 +8,8 @@ import java.util.Objects;
 
 import ai.timefold.solver.core.api.domain.lookup.PlanningId;
 
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
@@ -18,7 +20,9 @@ public class Department {
     private String id;
     private Map<String, Integer> specialtyToPriority;
     private String name;
+    @Schema(nullable = true)
     private Integer minimumAge = null;
+    @Schema(nullable = true)
     private Integer maximumAge = null;
     private List<Room> rooms;
 

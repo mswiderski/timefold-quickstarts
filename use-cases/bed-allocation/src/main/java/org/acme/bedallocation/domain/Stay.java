@@ -10,6 +10,8 @@ import ai.timefold.solver.core.api.domain.entity.PlanningEntity;
 import ai.timefold.solver.core.api.domain.lookup.PlanningId;
 import ai.timefold.solver.core.api.domain.variable.PlanningVariable;
 
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @PlanningEntity
@@ -27,6 +29,7 @@ public class Stay {
     private LocalDate departureDate;
     private String specialty;
     @PlanningVariable(allowsUnassigned = true)
+    @Schema(nullable = true)
     private Bed bed;
 
     public Stay() {
