@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.acme</groupId>
@@ -11,27 +12,31 @@
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <version.io.quarkus>3.8.3</version.io.quarkus>
-    <version.ai.timefold.solver>1.9.0</version.ai.timefold.solver>
+    <version.io.quarkus.platform>3.9.5</version.io.quarkus.platform>
+    <version.ai.timefold.solver>1.10.0</version.ai.timefold.solver>
+    <version.ai.timefold.models>999-SNAPSHOT</version.ai.timefold.models>
 
     <version.compiler.plugin>3.13.0</version.compiler.plugin>
     <version.resources.plugin>3.3.1</version.resources.plugin>
     <version.surefire.plugin>3.2.5</version.surefire.plugin>
+    <version.install.plugin>3.1.2</version.install.plugin>
+
+    <model.api.version>v1</model.api.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>io.quarkus</groupId>
+        <groupId>io.quarkus.platform</groupId>
         <artifactId>quarkus-bom</artifactId>
-        <version>${version.io.quarkus}</version>
+        <version>${version.io.quarkus.platform}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
-        <groupId>ai.timefold.solver</groupId>
-        <artifactId>timefold-solver-bom</artifactId>
-        <version>${version.ai.timefold.solver}</version>
+        <groupId>ai.timefold.models</groupId>
+        <artifactId>timefold-models-sdk-bom</artifactId>
+        <version>${version.ai.timefold.models}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -39,26 +44,6 @@
   </dependencyManagement>
 
   <dependencies>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-resteasy</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-resteasy-jackson</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-smallrye-openapi</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>ai.timefold.solver</groupId>
-      <artifactId>timefold-solver-quarkus</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>ai.timefold.solver</groupId>
-      <artifactId>timefold-solver-quarkus-jackson</artifactId>
-    </dependency>
 
     <!-- Testing -->
     <dependency>
@@ -69,6 +54,7 @@
     <dependency>
       <groupId>ai.timefold.solver</groupId>
       <artifactId>timefold-solver-test</artifactId>
+      <version>${version.ai.timefold.solver}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -96,6 +82,7 @@
     <dependency>
       <groupId>ai.timefold.solver</groupId>
       <artifactId>timefold-solver-webui</artifactId>
+      <version>${version.ai.timefold.solver}</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
@@ -149,11 +136,19 @@
       <plugin>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-maven-plugin</artifactId>
-        <version>${version.io.quarkus}</version>
+        <version>${version.io.quarkus.platform}</version>
+        <extensions>true</extensions>
+        <configuration>
+          <properties>
+            <model.api.version>${model.api.version}</model.api.version>
+          </properties>
+        </configuration>
         <executions>
           <execution>
             <goals>
               <goal>build</goal>
+              <goal>generate-code</goal>
+              <goal>generate-code-tests</goal>
             </goals>
           </execution>
         </executions>
@@ -166,6 +161,35 @@
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
           </systemPropertyVariables>
         </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>${version.install.plugin}</version>
+        <configuration>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>${project.artifactId}-descriptor</artifactId>
+          <classifier>${model.api.version}</classifier>
+          <version>${project.version}</version>
+          <file>${project.build.directory}/model-descriptor.jar</file>
+          <packaging>jar</packaging>
+          <generatePom>true</generatePom>
+        </configuration>
+        <executions>
+          <execution>
+            <id>install-timefold-package</id>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+          <execution>
+            <id>install-timefold-verify</id>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <phase>verify</phase>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
@@ -210,6 +234,18 @@
       </properties>
     </profile>
     <profile>
+      <id>default-profile</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>ai.timefold.models</groupId>
+          <artifactId>timefold-model-with-maps</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>container</id>
       <activation>
         <property>
@@ -223,8 +259,227 @@
         </dependency>
       </dependencies>
       <properties>
+        <quarkus.profile>container</quarkus.profile>
         <quarkus.container-image.build>true</quarkus.container-image.build>
       </properties>
+    </profile>
+    <profile>
+      <id>fs-storage</id>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>io.quarkus.platform</groupId>
+            <artifactId>quarkus-bom</artifactId>
+            <version>${version.io.quarkus.platform}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+          <dependency>
+            <groupId>ai.timefold.models.enterprise</groupId>
+            <artifactId>timefold-models-sdk-enterprise-bom</artifactId>
+            <version>${version.ai.timefold.models}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+      <dependencies>
+        <dependency>
+          <groupId>ai.timefold.models.enterprise</groupId>
+          <artifactId>timefold-model-enterprise-with-maps</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>ai.timefold.models.enterprise</groupId>
+          <artifactId>timefold-models-sdk-enterprise-storage-fs</artifactId>
+        </dependency>
+      </dependencies>
+      <properties>
+        <quarkus.profile>fs-storage</quarkus.profile>
+      </properties>
+    </profile>
+    <profile>
+      <id>s3-storage</id>
+      <activation>
+        <property>
+          <name>s3-storage</name>
+        </property>
+      </activation>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>io.quarkus.platform</groupId>
+            <artifactId>quarkus-bom</artifactId>
+            <version>${version.io.quarkus.platform}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+          <dependency>
+            <groupId>ai.timefold.models.enterprise</groupId>
+            <artifactId>timefold-models-sdk-enterprise-bom</artifactId>
+            <version>${version.ai.timefold.models}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+      <dependencies>
+        <dependency>
+          <groupId>ai.timefold.models.enterprise</groupId>
+          <artifactId>timefold-model-enterprise-with-maps</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>ai.timefold.models.enterprise</groupId>
+          <artifactId>timefold-models-sdk-enterprise-storage-s3</artifactId>
+        </dependency>
+      </dependencies>
+      <properties>
+        <skipITs>true</skipITs> <!-- skip integration tests as it requires remote storage -->
+        <quarkus.profile>s3-storage</quarkus.profile>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <systemPropertyVariables>
+                <quarkus.test.profile>test,s3-storage</quarkus.test.profile>
+              </systemPropertyVariables>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>gcs-storage</id>
+      <activation>
+        <property>
+          <name>gcs-storage</name>
+        </property>
+      </activation>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>io.quarkus.platform</groupId>
+            <artifactId>quarkus-bom</artifactId>
+            <version>${version.io.quarkus.platform}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+          <dependency>
+            <groupId>ai.timefold.models.enterprise</groupId>
+            <artifactId>timefold-models-sdk-enterprise-bom</artifactId>
+            <version>${version.ai.timefold.models}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+      <dependencies>
+        <dependency>
+          <groupId>ai.timefold.models.enterprise</groupId>
+          <artifactId>timefold-model-enterprise-with-maps</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>ai.timefold.models.enterprise</groupId>
+          <artifactId>timefold-models-sdk-enterprise-storage-gcs</artifactId>
+        </dependency>
+      </dependencies>
+      <properties>
+        <skipITs>true</skipITs> <!-- skip integration tests as it requires remote storage -->
+        <quarkus.profile>gcs-storage</quarkus.profile>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <systemPropertyVariables>
+                <quarkus.test.profile>test,gcs-storage</quarkus.test.profile>
+              </systemPropertyVariables>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>azure-storage</id>
+      <activation>
+        <property>
+          <name>azure-storage</name>
+        </property>
+      </activation>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>io.quarkus.platform</groupId>
+            <artifactId>quarkus-bom</artifactId>
+            <version>${version.io.quarkus.platform}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+          <dependency>
+            <groupId>ai.timefold.models.enterprise</groupId>
+            <artifactId>timefold-models-sdk-enterprise-bom</artifactId>
+            <version>${version.ai.timefold.models}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+      <dependencies>
+        <dependency>
+          <groupId>ai.timefold.models.enterprise</groupId>
+          <artifactId>timefold-model-enterprise-with-maps</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>ai.timefold.models.enterprise</groupId>
+          <artifactId>timefold-models-sdk-enterprise-storage-azure</artifactId>
+        </dependency>
+      </dependencies>
+      <properties>
+        <skipITs>true</skipITs> <!-- skip integration tests as it requires remote storage -->
+        <quarkus.profile>azure-storage</quarkus.profile>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <systemPropertyVariables>
+                <quarkus.test.profile>test,azure-storage</quarkus.test.profile>
+              </systemPropertyVariables>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>model-ui-container</id>
+      <activation>
+        <property>
+          <name>model-ui-container</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.google.cloud.tools</groupId>
+            <artifactId>jib-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>build-push-container</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>build</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 

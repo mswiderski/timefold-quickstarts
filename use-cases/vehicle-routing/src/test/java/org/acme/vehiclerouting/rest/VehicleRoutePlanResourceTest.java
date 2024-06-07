@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
@@ -16,21 +15,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import ai.timefold.solver.core.api.score.analysis.ConstraintAnalysis;
+import ai.timefold.models.sdk.api.SolvingStatus;
+import ai.timefold.models.sdk.api.analysis.ScoreAnalysisConstraintDetail;
+import ai.timefold.models.sdk.api.analysis.ScoreAnalysisDetail;
+import ai.timefold.models.sdk.api.domain.ModelConfig;
+import ai.timefold.models.sdk.api.domain.ScoreAnalysisConfig;
+import ai.timefold.models.sdk.api.domain.ScoreAnalysisRequest;
+import ai.timefold.models.sdk.maps.service.integration.model.Location;
+import ai.timefold.quarkus.models.sdk.defaults.EmptyModelConfigOverrides;
 import ai.timefold.solver.core.api.score.analysis.ScoreAnalysis;
-import ai.timefold.solver.core.api.solver.SolverStatus;
+import ai.timefold.solver.core.api.score.buildin.hardsoftlong.HardSoftLongScore;
 
-import org.acme.vehiclerouting.domain.Location;
 import org.acme.vehiclerouting.domain.VehicleRoutePlan;
 import org.acme.vehiclerouting.domain.Visit;
 import org.acme.vehiclerouting.domain.dto.ApplyRecommendationRequest;
 import org.acme.vehiclerouting.domain.dto.RecommendationRequest;
 import org.acme.vehiclerouting.domain.dto.VehicleRecommendation;
+import org.acme.vehiclerouting.solver.justifications.MinimizeTravelTimeJustification;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.quarkus.test.junit.QuarkusTest;
@@ -61,19 +68,19 @@ public class VehicleRoutePlanResourceTest {
 
         String analysisAsString = given()
                 .contentType(ContentType.JSON)
-                .body(solution)
-                .expect().contentType(ContentType.JSON)
+                .body(new ScoreAnalysisRequest(new ScoreAnalysisConfig(new ModelConfig(new EmptyModelConfigOverrides())),
+                        solution))
                 .when()
-                .put("/route-plans/analyze")
+                .post("/v1/route-plans/score-analysis?includeJustifications=true")
                 .then()
                 .extract()
-                .asString();
+                .body().asString();
 
-        ScoreAnalysis<?> analysis = parseScoreAnalysis(analysisAsString);
+        ScoreAnalysisDetail<?, ?> analysis = parseScoreAnalysis(analysisAsString);
 
         assertNotNull(analysis.score());
-        ConstraintAnalysis<?> minimizeTravelTimeAnalysis =
-                analysis.getConstraintAnalysis(VehicleRoutePlan.class.getPackageName(), "minimizeTravelTime");
+        ScoreAnalysisConstraintDetail<?, ?> minimizeTravelTimeAnalysis =
+                analysis.constraints().stream().filter(c -> c.name().equals("minimizeTravelTime")).findFirst().get();
         assertNotNull(minimizeTravelTimeAnalysis);
         assertNotNull(minimizeTravelTimeAnalysis.matches());
         assertFalse(minimizeTravelTimeAnalysis.matches().isEmpty());
@@ -86,53 +93,56 @@ public class VehicleRoutePlanResourceTest {
 
         String analysisAsString = given()
                 .contentType(ContentType.JSON)
-                .queryParam("fetchPolicy", "FETCH_SHALLOW")
-                .body(solution)
+                .body(new ScoreAnalysisRequest(new ScoreAnalysisConfig(new ModelConfig(new EmptyModelConfigOverrides())),
+                        solution))
                 .expect().contentType(ContentType.JSON)
                 .when()
-                .put("/route-plans/analyze")
+                .post("/v1/route-plans/score-analysis")
                 .then()
                 .extract()
-                .asString();
+                .body().asString();
 
-        ScoreAnalysis<?> analysis = parseScoreAnalysis(analysisAsString);
+        ScoreAnalysisDetail<?, ?> analysis = parseScoreAnalysis(analysisAsString);
 
         assertNotNull(analysis.score());
-        ConstraintAnalysis<?> minimizeTravelTimeAnalysis =
-                analysis.getConstraintAnalysis(VehicleRoutePlan.class.getPackageName(), "minimizeTravelTime");
+        ScoreAnalysisConstraintDetail<?, ?> minimizeTravelTimeAnalysis =
+                analysis.constraints().stream().filter(c -> c.name().equals("minimizeTravelTime")).findFirst().get();
         assertNotNull(minimizeTravelTimeAnalysis);
-        assertNull(minimizeTravelTimeAnalysis.matches());
+        assertTrue(minimizeTravelTimeAnalysis.matches().isEmpty());
     }
 
     private VehicleRoutePlan generateInitialSolution() {
         // Fetching the problem data
-        VehicleRoutePlan vehicleRoutePlan = given()
-                .when().get("/demo-data/FIRENZE")
+        String vehicleRoutePlan = given()
+                .when().get("/v1/demo-data/FIRENZE")
                 .then()
                 .statusCode(200)
                 .extract()
-                .as(VehicleRoutePlan.class);
+                .body().asPrettyString();
 
         // Starting the optimization
         String jobId = given()
                 .contentType(ContentType.JSON)
                 .body(vehicleRoutePlan)
-                .expect().contentType(ContentType.TEXT)
-                .when().post("/route-plans")
+                .expect().contentType(ContentType.JSON)
+                .when().post("/v1/route-plans")
                 .then()
-                .statusCode(200)
+                .statusCode(202)
                 .extract()
-                .asString();
+                .body().path("id");
+
 
         // Waiting for the solution
         await()
                 .atMost(Duration.ofMinutes(1))
                 .pollInterval(Duration.ofMillis(500L))
-                .until(() -> SolverStatus.NOT_SOLVING.name().equals(
-                        get("/route-plans/" + jobId + "/status")
+                .until(() -> SolvingStatus.SOLVING_COMPLETED.name().equals(
+                        get("/v1/route-plans/" + jobId + "/run")
                                 .jsonPath().get("solverStatus")));
 
-        VehicleRoutePlan solution = get("/route-plans/" + jobId).then().extract().as(VehicleRoutePlan.class);
+        VehicleRoutePlan solution =
+                get("/v1/route-plans/" + jobId).then().extract().jsonPath().getObject("modelOutput", VehicleRoutePlan.class);
+
         return solution;
     }
 
@@ -153,7 +163,7 @@ public class VehicleRoutePlanResourceTest {
                 .body(request)
                 .expect().contentType(ContentType.JSON)
                 .when()
-                .post("/route-plans/recommendation")
+                .post("/v1/route-plans/recommendation")
                 .then()
                 .extract()
                 .as(List.class));
@@ -172,7 +182,7 @@ public class VehicleRoutePlanResourceTest {
                 .body(applyRequest)
                 .expect().contentType(ContentType.JSON)
                 .when()
-                .post("/route-plans/recommendation/apply")
+                .post("/v1/route-plans/recommendation/apply")
                 .then()
                 .extract()
                 .as(VehicleRoutePlan.class);
@@ -183,7 +193,6 @@ public class VehicleRoutePlanResourceTest {
         // Generate an initial solution
         VehicleRoutePlan solution = generateInitialSolution();
         assertNotNull(solution);
-        assertEquals(solution.getSolverStatus(), SolverStatus.NOT_SOLVING);
 
         // Create a new visit
         Visit newVisit = generateNewVisit(solution);
@@ -200,41 +209,43 @@ public class VehicleRoutePlanResourceTest {
     }
 
     private VehicleRoutePlan solveDemoData() {
-        VehicleRoutePlan vehicleRoutePlan = given()
-                .when().get("/demo-data/FIRENZE")
+        String vehicleRoutePlan = given()
+                .when().get("/v1/demo-data/FIRENZE")
                 .then()
                 .statusCode(200)
                 .extract()
-                .as(VehicleRoutePlan.class);
+                .body().asPrettyString();
 
         String jobId = given()
                 .contentType(ContentType.JSON)
                 .body(vehicleRoutePlan)
-                .expect().contentType(ContentType.TEXT)
-                .when().post("/route-plans")
+                .expect().contentType(ContentType.JSON)
+                .when().post("/v1/route-plans")
                 .then()
-                .statusCode(200)
+                .statusCode(202)
                 .extract()
-                .asString();
+                .body().path("id");
 
         await()
                 .atMost(Duration.ofMinutes(1))
                 .pollInterval(Duration.ofMillis(500L))
-                .until(() -> SolverStatus.NOT_SOLVING.name().equals(
-                        get("/route-plans/" + jobId + "/status")
+                .until(() -> SolvingStatus.SOLVING_COMPLETED.name().equals(
+                        get("/v1/route-plans/" + jobId + "/run")
                                 .jsonPath().get("solverStatus")));
 
-        VehicleRoutePlan solution = get("/route-plans/" + jobId).then().extract().as(VehicleRoutePlan.class);
-        assertEquals(solution.getSolverStatus(), SolverStatus.NOT_SOLVING);
+        VehicleRoutePlan solution =
+                get("/v1/route-plans/" + jobId).then().extract().jsonPath().getObject("modelOutput", VehicleRoutePlan.class);
         assertNotNull(solution.getVehicles());
         assertNotNull(solution.getVisits());
         assertNotNull(solution.getVehicles().get(0).getVisits());
         return solution;
     }
 
-    private ScoreAnalysis<?> parseScoreAnalysis(String analysis) throws JsonProcessingException {
+    private ScoreAnalysisDetail<HardSoftLongScore, MinimizeTravelTimeJustification> parseScoreAnalysis(String analysis)
+            throws JsonProcessingException {
         assertNotNull(analysis);
-        return OBJECT_MAPPER.readValue(analysis, ScoreAnalysis.class);
+        return OBJECT_MAPPER.readValue(analysis, new TypeReference<>() {
+        });
     }
 
     private List<Pair<VehicleRecommendation, ScoreAnalysis>>

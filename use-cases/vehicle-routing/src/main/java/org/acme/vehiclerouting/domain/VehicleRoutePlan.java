@@ -2,20 +2,23 @@ package org.acme.vehiclerouting.domain;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
+import ai.timefold.models.sdk.api.ModelInput;
+import ai.timefold.models.sdk.api.ModelOutput;
+import ai.timefold.models.sdk.maps.service.integration.LocationsAwareSolverModel;
+import ai.timefold.models.sdk.maps.service.integration.model.Location;
+import ai.timefold.quarkus.models.sdk.defaults.EmptyModelKpi;
 import ai.timefold.solver.core.api.domain.solution.PlanningEntityCollectionProperty;
 import ai.timefold.solver.core.api.domain.solution.PlanningScore;
 import ai.timefold.solver.core.api.domain.solution.PlanningSolution;
-import ai.timefold.solver.core.api.domain.solution.ProblemFactCollectionProperty;
 import ai.timefold.solver.core.api.domain.valuerange.ValueRangeProvider;
 import ai.timefold.solver.core.api.score.buildin.hardsoftlong.HardSoftLongScore;
 import ai.timefold.solver.core.api.solver.SolverStatus;
 
-import org.acme.vehiclerouting.domain.geo.DrivingTimeCalculator;
-import org.acme.vehiclerouting.domain.geo.HaversineDrivingTimeCalculator;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -33,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @PlanningSolution
-public class VehicleRoutePlan {
+public class VehicleRoutePlan implements ModelInput, ModelOutput, LocationsAwareSolverModel<HardSoftLongScore, EmptyModelKpi> {
 
     private String name;
 
@@ -82,12 +85,8 @@ public class VehicleRoutePlan {
         this.endDateTime = endDateTime;
         this.vehicles = vehicles;
         this.visits = visits;
-        List<Location> locations = Stream.concat(
-                vehicles.stream().map(Vehicle::getHomeLocation),
-                visits.stream().map(Visit::getLocation)).toList();
 
-        DrivingTimeCalculator drivingTimeCalculator = HaversineDrivingTimeCalculator.getInstance();
-        drivingTimeCalculator.initDrivingTimeMaps(locations);
+
     }
 
     public String getName() {
@@ -150,5 +149,27 @@ public class VehicleRoutePlan {
 
     public void setScoreExplanation(String scoreExplanation) {
         this.scoreExplanation = scoreExplanation;
+    }
+
+    @JsonIgnore
+    @Override
+    public List<Location> getLocations() {
+        List<Location> locations = Stream.concat(
+                vehicles.stream().map(Vehicle::getHomeLocation),
+                visits.stream().map(Visit::getLocation)).toList();
+
+        return locations;
+    }
+
+    @JsonIgnore
+    @Override
+    public EmptyModelKpi getKpis() {
+        return null;
+    }
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Override
+    public Optional<String> getLocationSetName() {
+        return Optional.empty();
     }
 }

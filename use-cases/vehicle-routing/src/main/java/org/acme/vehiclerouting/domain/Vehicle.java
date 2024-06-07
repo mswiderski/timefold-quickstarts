@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import ai.timefold.models.sdk.maps.service.integration.model.Location;
 import ai.timefold.solver.core.api.domain.entity.PlanningEntity;
 import ai.timefold.solver.core.api.domain.lookup.PlanningId;
 import ai.timefold.solver.core.api.domain.variable.PlanningListVariable;
@@ -96,14 +97,17 @@ public class Vehicle {
         }
 
         long totalDrivingTime = 0;
-        Location previousLocation = homeLocation;
+        try {
+            Location previousLocation = homeLocation;
 
-        for (Visit visit : visits) {
-            totalDrivingTime += previousLocation.getDrivingTimeTo(visit.getLocation());
-            previousLocation = visit.getLocation();
+            for (Visit visit : visits) {
+                totalDrivingTime += previousLocation.getDrivingTimeTo(visit.getLocation());
+                previousLocation = visit.getLocation();
+            }
+            totalDrivingTime += previousLocation.getDrivingTimeTo(homeLocation);
+        } catch (IllegalStateException e) {
+
         }
-        totalDrivingTime += previousLocation.getDrivingTimeTo(homeLocation);
-
         return totalDrivingTime;
     }
 
@@ -112,9 +116,12 @@ public class Vehicle {
         if (visits.isEmpty()) {
             return departureTime;
         }
-
-        Visit lastVisit = visits.get(visits.size() - 1);
-        return lastVisit.getDepartureTime().plusSeconds(lastVisit.getLocation().getDrivingTimeTo(homeLocation));
+        try {
+            Visit lastVisit = visits.get(visits.size() - 1);
+            return lastVisit.getDepartureTime().plusSeconds(lastVisit.getLocation().getDrivingTimeTo(homeLocation));
+        } catch (IllegalStateException e) {
+            return departureTime;
+        }
     }
 
     @Override

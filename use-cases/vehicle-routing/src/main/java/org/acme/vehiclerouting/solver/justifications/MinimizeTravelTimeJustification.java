@@ -1,11 +1,9 @@
 package org.acme.vehiclerouting.solver.justifications;
 
-import ai.timefold.solver.core.api.score.stream.ConstraintJustification;
-
 import java.time.Duration;
 
 public record MinimizeTravelTimeJustification(String vehicleName, long totalDrivingTimeSeconds,
-        String description) implements ConstraintJustification {
+        String description) implements VehicleRouteJustification {
 
     public MinimizeTravelTimeJustification(String vehicleName, long totalDrivingTimeSeconds) {
         this(vehicleName, totalDrivingTimeSeconds, "Vehicle '%s' total travel time is %s."

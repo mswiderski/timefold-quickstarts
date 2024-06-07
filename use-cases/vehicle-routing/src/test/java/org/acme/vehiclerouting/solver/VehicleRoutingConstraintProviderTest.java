@@ -5,16 +5,18 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import jakarta.inject.Inject;
 
+import ai.timefold.models.sdk.maps.service.integration.DistanceMatrix;
+import ai.timefold.models.sdk.maps.service.integration.model.Location;
 import ai.timefold.solver.test.api.score.stream.ConstraintVerifier;
 
-import org.acme.vehiclerouting.domain.Location;
 import org.acme.vehiclerouting.domain.Vehicle;
 import org.acme.vehiclerouting.domain.VehicleRoutePlan;
 import org.acme.vehiclerouting.domain.Visit;
-import org.acme.vehiclerouting.domain.geo.HaversineDrivingTimeCalculator;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -37,9 +39,17 @@ class VehicleRoutingConstraintProviderTest {
     ConstraintVerifier<VehicleRoutingConstraintProvider, VehicleRoutePlan> constraintVerifier;
 
     @BeforeAll
-    static void initDrivingTimeMaps() {
-        HaversineDrivingTimeCalculator.getInstance().initDrivingTimeMaps(Arrays.asList(LOCATION_1, LOCATION_2, LOCATION_3));
+    static void initDistanceMaps() {
+        DistanceMatrix travelTimeMatrix = DistanceMatrix.fromMaps(List.of(LOCATION_1, LOCATION_2, LOCATION_3),
+                Map.of(LOCATION_1, 0L, LOCATION_2, 703L, LOCATION_3, 785L),
+                Map.of(LOCATION_2, 0L, LOCATION_3, 533L, LOCATION_1, 703L),
+                Map.of(LOCATION_3, 0L, LOCATION_2, 533L, LOCATION_1, 785L));
+        LOCATION_1.setTravelTimeMatrix(travelTimeMatrix);
+        LOCATION_2.setTravelTimeMatrix(travelTimeMatrix);
+        LOCATION_3.setTravelTimeMatrix(travelTimeMatrix);
+
     }
+
 
     @Test
     void vehicleCapacityUnpenalized() {
@@ -84,7 +94,7 @@ class VehicleRoutingConstraintProviderTest {
 
         constraintVerifier.verifyThat(VehicleRoutingConstraintProvider::minimizeTravelTime)
                 .given(vehicleA, visit1, visit2)
-                .penalizesBy(2423L); // The sum of the approximate driving time between all three locations.
+                .penalizesBy(2021L); // The sum of the approximate driving time between all three locations.
     }
 
     @Test

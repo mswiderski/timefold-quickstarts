@@ -3,6 +3,7 @@ package org.acme.vehiclerouting.domain;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import ai.timefold.models.sdk.maps.service.integration.model.Location;
 import ai.timefold.solver.core.api.domain.entity.PlanningEntity;
 import ai.timefold.solver.core.api.domain.lookup.PlanningId;
 import ai.timefold.solver.core.api.domain.variable.InverseRelationShadowVariable;
@@ -11,6 +12,7 @@ import ai.timefold.solver.core.api.domain.variable.PreviousElementShadowVariable
 import ai.timefold.solver.core.api.domain.variable.ShadowVariable;
 
 import org.acme.vehiclerouting.solver.ArrivalTimeUpdatingVariableListener;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
@@ -33,10 +35,11 @@ public class Visit {
 
     private Vehicle vehicle;
 
+    @Schema(nullable = true)
     private Visit previousVisit;
-
+    @Schema(nullable = true)
     private Visit nextVisit;
-
+    @Schema(nullable = true)
     private LocalDateTime arrivalTime;
 
     public Visit() {
@@ -137,6 +140,7 @@ public class Visit {
     // Complex methods
     // ************************************************************************
 
+    @Schema(nullable = true)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public LocalDateTime getDepartureTime() {
         if (arrivalTime == null) {
@@ -145,6 +149,7 @@ public class Visit {
         return getStartServiceTime().plus(serviceDuration);
     }
 
+    @Schema(nullable = true)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public LocalDateTime getStartServiceTime() {
         if (arrivalTime == null) {
@@ -173,12 +178,17 @@ public class Visit {
             throw new IllegalStateException(
                     "This method must not be called when the shadow variables are not initialized yet.");
         }
-        if (previousVisit == null) {
-            return vehicle.getHomeLocation().getDrivingTimeTo(location);
+        try {
+            if (previousVisit == null) {
+                return vehicle.getHomeLocation().getDrivingTimeTo(location);
+            }
+            return previousVisit.getLocation().getDrivingTimeTo(location);
+        } catch (IllegalStateException e) {
+            return 0;
         }
-        return previousVisit.getLocation().getDrivingTimeTo(location);
     }
 
+    @Schema(nullable = true)
     // Required by the web UI even before the solution has been initialized.
     @JsonProperty(value = "drivingTimeSecondsFromPreviousStandstill", access = JsonProperty.Access.READ_ONLY)
     public Long getDrivingTimeSecondsFromPreviousStandstillOrNull() {
