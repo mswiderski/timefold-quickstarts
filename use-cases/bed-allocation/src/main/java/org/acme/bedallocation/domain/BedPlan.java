@@ -12,7 +12,8 @@ import ai.timefold.solver.core.api.domain.solution.PlanningSolution;
 import ai.timefold.solver.core.api.domain.solution.ProblemFactCollectionProperty;
 import ai.timefold.solver.core.api.domain.valuerange.ValueRangeProvider;
 import ai.timefold.solver.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
-import ai.timefold.solver.core.api.solver.SolverStatus;
+
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -30,10 +31,10 @@ public class BedPlan implements ModelInput, ModelOutput, SolverModel<HardMediumS
     @JsonIgnore
     private List<Bed> beds;
 
+    @JsonIgnore
+    @Schema(hidden = true)
     @PlanningScore
     private HardMediumSoftScore score;
-
-    private SolverStatus solverStatus;
 
     // No-arg constructor required for Timefold
     public BedPlan() {
@@ -52,11 +53,6 @@ public class BedPlan implements ModelInput, ModelOutput, SolverModel<HardMediumS
                 .flatMap(d -> d.getRooms().stream())
                 .flatMap(r -> r.getBeds().stream())
                 .toList();
-    }
-
-    public BedPlan(HardMediumSoftScore score, SolverStatus solverStatus) {
-        this.score = score;
-        this.solverStatus = solverStatus;
     }
 
     // ************************************************************************
@@ -105,18 +101,10 @@ public class BedPlan implements ModelInput, ModelOutput, SolverModel<HardMediumS
         this.score = score;
     }
 
-    public SolverStatus getSolverStatus() {
-        return solverStatus;
-    }
-
-    public void setSolverStatus(SolverStatus solverStatus) {
-        this.solverStatus = solverStatus;
-    }
-
     @JsonIgnore
     @Override
     public EmptyModelKpi getKpis() {
-        return null;
+        return new EmptyModelKpi();
     }
 
 }

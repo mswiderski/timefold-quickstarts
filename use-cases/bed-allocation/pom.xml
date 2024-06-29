@@ -286,6 +286,10 @@
           <groupId>ai.timefold.models.enterprise</groupId>
           <artifactId>timefold-models-sdk-enterprise-storage-fs</artifactId>
         </dependency>
+        <dependency>
+          <groupId>ai.timefold.models.enterprise</groupId>
+          <artifactId>timefold-orbit-quarkus-insights</artifactId>
+        </dependency>
       </dependencies>
       <properties>
         <quarkus.profile>fs-storage</quarkus.profile>
@@ -324,6 +328,10 @@
         <dependency>
           <groupId>ai.timefold.models.enterprise</groupId>
           <artifactId>timefold-models-sdk-enterprise-storage-s3</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>ai.timefold.models.enterprise</groupId>
+          <artifactId>timefold-orbit-quarkus-insights</artifactId>
         </dependency>
       </dependencies>
       <properties>
@@ -378,6 +386,10 @@
           <groupId>ai.timefold.models.enterprise</groupId>
           <artifactId>timefold-models-sdk-enterprise-storage-gcs</artifactId>
         </dependency>
+        <dependency>
+          <groupId>ai.timefold.models.enterprise</groupId>
+          <artifactId>timefold-orbit-quarkus-insights</artifactId>
+        </dependency>
       </dependencies>
       <properties>
         <skipITs>true</skipITs> <!-- skip integration tests as it requires remote storage -->
@@ -430,6 +442,10 @@
         <dependency>
           <groupId>ai.timefold.models.enterprise</groupId>
           <artifactId>timefold-models-sdk-enterprise-storage-azure</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>ai.timefold.models.enterprise</groupId>
+          <artifactId>timefold-orbit-quarkus-insights</artifactId>
         </dependency>
       </dependencies>
       <properties>

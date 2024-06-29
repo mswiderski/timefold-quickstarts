@@ -15,7 +15,8 @@ import ai.timefold.solver.core.api.domain.solution.PlanningScore;
 import ai.timefold.solver.core.api.domain.solution.PlanningSolution;
 import ai.timefold.solver.core.api.domain.valuerange.ValueRangeProvider;
 import ai.timefold.solver.core.api.score.buildin.hardsoftlong.HardSoftLongScore;
-import ai.timefold.solver.core.api.solver.SolverStatus;
+
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -54,20 +55,14 @@ public class VehicleRoutePlan implements ModelInput, ModelOutput, LocationsAware
     @ValueRangeProvider
     private List<Visit> visits;
 
+    @JsonIgnore
+    @Schema(hidden = true)
     @PlanningScore
     private HardSoftLongScore score;
-
-    private SolverStatus solverStatus;
 
     private String scoreExplanation;
 
     public VehicleRoutePlan() {
-    }
-
-    public VehicleRoutePlan(String name, HardSoftLongScore score, SolverStatus solverStatus) {
-        this.name = name;
-        this.score = score;
-        this.solverStatus = solverStatus;
     }
 
     @JsonCreator
@@ -134,14 +129,6 @@ public class VehicleRoutePlan implements ModelInput, ModelOutput, LocationsAware
         return vehicles == null ? 0 : vehicles.stream().mapToLong(Vehicle::getTotalDrivingTimeSeconds).sum();
     }
 
-    public SolverStatus getSolverStatus() {
-        return solverStatus;
-    }
-
-    public void setSolverStatus(SolverStatus solverStatus) {
-        this.solverStatus = solverStatus;
-    }
-
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getScoreExplanation() {
         return scoreExplanation;
@@ -164,7 +151,7 @@ public class VehicleRoutePlan implements ModelInput, ModelOutput, LocationsAware
     @JsonIgnore
     @Override
     public EmptyModelKpi getKpis() {
-        return null;
+        return new EmptyModelKpi();
     }
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
