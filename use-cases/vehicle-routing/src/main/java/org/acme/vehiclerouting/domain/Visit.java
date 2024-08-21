@@ -3,7 +3,7 @@ package org.acme.vehiclerouting.domain;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-import ai.timefold.models.sdk.maps.service.integration.model.Location;
+import ai.timefold.sdk.maps.service.integration.api.model.Location;
 import ai.timefold.solver.core.api.domain.entity.PlanningEntity;
 import ai.timefold.solver.core.api.domain.lookup.PlanningId;
 import ai.timefold.solver.core.api.domain.variable.InverseRelationShadowVariable;

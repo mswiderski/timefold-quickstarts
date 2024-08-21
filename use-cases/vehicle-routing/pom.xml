@@ -12,8 +12,8 @@
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <version.io.quarkus.platform>3.9.5</version.io.quarkus.platform>
-    <version.ai.timefold.solver>1.10.0</version.ai.timefold.solver>
+    <version.io.quarkus.platform>3.12.3</version.io.quarkus.platform>
+    <version.ai.timefold.solver>1.12.0</version.ai.timefold.solver>
     <version.ai.timefold.models>999-SNAPSHOT</version.ai.timefold.models>
 
     <version.compiler.plugin>3.13.0</version.compiler.plugin>
@@ -34,8 +34,8 @@
         <scope>import</scope>
       </dependency>
       <dependency>
-        <groupId>ai.timefold.models</groupId>
-        <artifactId>timefold-models-sdk-bom</artifactId>
+        <groupId>ai.timefold.sdk</groupId>
+        <artifactId>timefold-sdk-bom</artifactId>
         <version>${version.ai.timefold.models}</version>
         <type>pom</type>
         <scope>import</scope>
@@ -240,8 +240,8 @@
       </activation>
       <dependencies>
         <dependency>
-          <groupId>ai.timefold.models</groupId>
-          <artifactId>timefold-model-with-maps</artifactId>
+          <groupId>ai.timefold.sdk</groupId>
+          <artifactId>timefold-sdk-with-maps</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -275,8 +275,8 @@
             <scope>import</scope>
           </dependency>
           <dependency>
-            <groupId>ai.timefold.models.enterprise</groupId>
-            <artifactId>timefold-models-sdk-enterprise-bom</artifactId>
+            <groupId>ai.timefold.sdk.enterprise</groupId>
+            <artifactId>timefold-sdk-enterprise-bom</artifactId>
             <version>${version.ai.timefold.models}</version>
             <type>pom</type>
             <scope>import</scope>
@@ -285,15 +285,15 @@
       </dependencyManagement>
       <dependencies>
         <dependency>
-          <groupId>ai.timefold.models.enterprise</groupId>
+          <groupId>ai.timefold.sdk.enterprise</groupId>
           <artifactId>timefold-model-enterprise-with-maps</artifactId>
         </dependency>
         <dependency>
-          <groupId>ai.timefold.models.enterprise</groupId>
-          <artifactId>timefold-models-sdk-enterprise-storage-fs</artifactId>
+          <groupId>ai.timefold.sdk.enterprise</groupId>
+          <artifactId>timefold-sdk-enterprise-storage-fs</artifactId>
         </dependency>
         <dependency>
-          <groupId>ai.timefold.models.enterprise</groupId>
+          <groupId>ai.timefold.sdk.enterprise</groupId>
           <artifactId>timefold-orbit-quarkus-insights</artifactId>
         </dependency>        
       </dependencies>
@@ -318,8 +318,8 @@
             <scope>import</scope>
           </dependency>
           <dependency>
-            <groupId>ai.timefold.models.enterprise</groupId>
-            <artifactId>timefold-models-sdk-enterprise-bom</artifactId>
+            <groupId>ai.timefold.sdk.enterprise</groupId>
+            <artifactId>timefold-sdk-enterprise-bom</artifactId>
             <version>${version.ai.timefold.models}</version>
             <type>pom</type>
             <scope>import</scope>
@@ -328,15 +328,15 @@
       </dependencyManagement>
       <dependencies>
         <dependency>
-          <groupId>ai.timefold.models.enterprise</groupId>
+          <groupId>ai.timefold.sdk.enterprise</groupId>
           <artifactId>timefold-model-enterprise-with-maps</artifactId>
         </dependency>
         <dependency>
-          <groupId>ai.timefold.models.enterprise</groupId>
-          <artifactId>timefold-models-sdk-enterprise-storage-s3</artifactId>
+          <groupId>ai.timefold.sdk.enterprise</groupId>
+          <artifactId>timefold-sdk-enterprise-storage-s3</artifactId>
         </dependency>
         <dependency>
-          <groupId>ai.timefold.models.enterprise</groupId>
+          <groupId>ai.timefold.sdk.enterprise</groupId>
           <artifactId>timefold-orbit-quarkus-insights</artifactId>
         </dependency>        
       </dependencies>
@@ -375,8 +375,8 @@
             <scope>import</scope>
           </dependency>
           <dependency>
-            <groupId>ai.timefold.models.enterprise</groupId>
-            <artifactId>timefold-models-sdk-enterprise-bom</artifactId>
+            <groupId>ai.timefold.sdk.enterprise</groupId>
+            <artifactId>timefold-sdk-enterprise-bom</artifactId>
             <version>${version.ai.timefold.models}</version>
             <type>pom</type>
             <scope>import</scope>
@@ -385,15 +385,15 @@
       </dependencyManagement>
       <dependencies>
         <dependency>
-          <groupId>ai.timefold.models.enterprise</groupId>
+          <groupId>ai.timefold.sdk.enterprise</groupId>
           <artifactId>timefold-model-enterprise-with-maps</artifactId>
         </dependency>
         <dependency>
-          <groupId>ai.timefold.models.enterprise</groupId>
-          <artifactId>timefold-models-sdk-enterprise-storage-gcs</artifactId>
+          <groupId>ai.timefold.sdk.enterprise</groupId>
+          <artifactId>timefold-sdk-enterprise-storage-gcs</artifactId>
         </dependency>
         <dependency>
-          <groupId>ai.timefold.models.enterprise</groupId>
+          <groupId>ai.timefold.sdk.enterprise</groupId>
           <artifactId>timefold-orbit-quarkus-insights</artifactId>
         </dependency>        
       </dependencies>
@@ -432,8 +432,8 @@
             <scope>import</scope>
           </dependency>
           <dependency>
-            <groupId>ai.timefold.models.enterprise</groupId>
-            <artifactId>timefold-models-sdk-enterprise-bom</artifactId>
+            <groupId>ai.timefold.sdk.enterprise</groupId>
+            <artifactId>timefold-sdk-enterprise-bom</artifactId>
             <version>${version.ai.timefold.models}</version>
             <type>pom</type>
             <scope>import</scope>
@@ -442,15 +442,15 @@
       </dependencyManagement>
       <dependencies>
         <dependency>
-          <groupId>ai.timefold.models.enterprise</groupId>
+          <groupId>ai.timefold.sdk.enterprise</groupId>
           <artifactId>timefold-model-enterprise-with-maps</artifactId>
         </dependency>
         <dependency>
-          <groupId>ai.timefold.models.enterprise</groupId>
-          <artifactId>timefold-models-sdk-enterprise-storage-azure</artifactId>
+          <groupId>ai.timefold.sdk.enterprise</groupId>
+          <artifactId>timefold-sdk-enterprise-storage-azure</artifactId>
         </dependency>
         <dependency>
-          <groupId>ai.timefold.models.enterprise</groupId>
+          <groupId>ai.timefold.sdk.enterprise</groupId>
           <artifactId>timefold-orbit-quarkus-insights</artifactId>
         </dependency>        
       </dependencies>
@@ -468,31 +468,6 @@
                 <quarkus.test.profile>test,azure-storage</quarkus.test.profile>
               </systemPropertyVariables>
             </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>model-ui-container</id>
-      <activation>
-        <property>
-          <name>model-ui-container</name>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>com.google.cloud.tools</groupId>
-            <artifactId>jib-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>build-push-container</id>
-                <phase>package</phase>
-                <goals>
-                  <goal>build</goal>
-                </goals>
-              </execution>
-            </executions>
           </plugin>
         </plugins>
       </build>

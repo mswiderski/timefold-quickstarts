@@ -7,7 +7,7 @@ import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 
-import ai.timefold.models.sdk.api.SolvingStatus;
+import ai.timefold.sdk.core.api.SolvingStatus;
 
 import org.acme.bedallocation.domain.BedPlan;
 import org.junit.jupiter.api.BeforeAll;

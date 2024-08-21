@@ -9,7 +9,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import ai.timefold.quarkus.models.sdk.rest.ModelsRESTApi;
+import ai.timefold.sdk.rest.api.ModelRest;
 import ai.timefold.solver.core.api.score.buildin.hardsoftlong.HardSoftLongScore;
 import ai.timefold.solver.core.api.solver.RecommendedFit;
 
@@ -28,7 +28,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 @Tag(name = "Vehicle Routing with Capacity and Time Windows",
         description = "Vehicle Routing optimizes routes of vehicles with given capacities to visits available in specified time windows.")
 @Path("/v1/route-plans")
-public interface VehicleRoutePlanModelsRESTApi extends ModelsRESTApi {
+public interface VehicleRoutePlanModelsRESTApi extends ModelRest {
 
 
 

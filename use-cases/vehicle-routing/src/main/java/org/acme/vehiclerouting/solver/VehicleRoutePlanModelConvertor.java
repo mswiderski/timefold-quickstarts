@@ -2,10 +2,10 @@ package org.acme.vehiclerouting.solver;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
-import ai.timefold.models.sdk.api.ModelConvertor;
-import ai.timefold.models.sdk.api.domain.ModelConfig;
-import ai.timefold.quarkus.models.sdk.defaults.EmptyModelConfigOverrides;
-import ai.timefold.quarkus.models.sdk.defaults.EmptyModelKpi;
+import ai.timefold.sdk.core.api.ModelConvertor;
+import ai.timefold.sdk.core.api.domain.ModelConfig;
+import ai.timefold.sdk.quarkus.deployment.defaults.EmptyModelConfigOverrides;
+import ai.timefold.sdk.quarkus.deployment.defaults.EmptyModelKpi;
 import ai.timefold.solver.core.api.score.buildin.hardsoftlong.HardSoftLongScore;
 
 import org.acme.vehiclerouting.domain.VehicleRoutePlan;

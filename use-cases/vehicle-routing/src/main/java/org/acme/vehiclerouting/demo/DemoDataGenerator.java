@@ -15,18 +15,18 @@ import java.util.stream.Stream;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
-import ai.timefold.models.sdk.api.ModelInput;
-import ai.timefold.models.sdk.api.data.GeneratedDemoData;
-import ai.timefold.models.sdk.api.domain.ModelRequest;
-import ai.timefold.models.sdk.maps.service.integration.model.Location;
-import ai.timefold.quarkus.models.sdk.defaults.EmptyModelConfigOverrides;
+import ai.timefold.sdk.core.api.ModelInput;
+import ai.timefold.sdk.core.api.data.GeneratedDemoData;
+import ai.timefold.sdk.core.api.domain.ModelRequest;
+import ai.timefold.sdk.maps.service.integration.api.model.Location;
+import ai.timefold.sdk.quarkus.deployment.defaults.EmptyModelConfigOverrides;
 
 import org.acme.vehiclerouting.domain.Vehicle;
 import org.acme.vehiclerouting.domain.VehicleRoutePlan;
 import org.acme.vehiclerouting.domain.Visit;
 
 @ApplicationScoped
-public class DemoDataGenerator implements ai.timefold.models.sdk.api.data.DemoDataGenerator {
+public class DemoDataGenerator implements ai.timefold.sdk.core.api.data.DemoDataGenerator {
 
     private static final String[] FIRST_NAMES = { "Amy", "Beth", "Chad", "Dan", "Elsa", "Flo", "Gus", "Hugo", "Ivy", "Jay" };
     private static final String[] LAST_NAMES = { "Cole", "Fox", "Green", "Jones", "King", "Li", "Poe", "Rye", "Smith", "Watt" };

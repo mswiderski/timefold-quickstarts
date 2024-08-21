@@ -2,17 +2,17 @@ package org.acme.bedallocation.solver;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
-import ai.timefold.models.sdk.api.ModelConvertor;
-import ai.timefold.models.sdk.api.domain.ModelConfig;
-import ai.timefold.quarkus.models.sdk.defaults.EmptyModelConfigOverrides;
-import ai.timefold.quarkus.models.sdk.defaults.EmptyModelKpi;
+import ai.timefold.sdk.core.api.ModelConvertor;
+import ai.timefold.sdk.core.api.domain.ModelConfig;
+import ai.timefold.sdk.quarkus.deployment.defaults.EmptyModelConfigOverrides;
 import ai.timefold.solver.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
 
+import org.acme.bedallocation.domain.BedAllocationKpis;
 import org.acme.bedallocation.domain.BedPlan;
 
 @ApplicationScoped
 public class BedPlanModelConvertor implements
-        ModelConvertor<HardMediumSoftScore, BedPlan, BedPlan, EmptyModelConfigOverrides, EmptyModelKpi, BedPlan> {
+        ModelConvertor<HardMediumSoftScore, BedPlan, BedPlan, EmptyModelConfigOverrides, BedAllocationKpis, BedPlan> {
 
 
 

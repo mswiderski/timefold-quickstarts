@@ -20,10 +20,10 @@ import java.util.stream.Stream;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
-import ai.timefold.models.sdk.api.ModelInput;
-import ai.timefold.models.sdk.api.data.GeneratedDemoData;
-import ai.timefold.models.sdk.api.domain.ModelRequest;
-import ai.timefold.quarkus.models.sdk.defaults.EmptyModelConfigOverrides;
+import ai.timefold.sdk.core.api.ModelInput;
+import ai.timefold.sdk.core.api.data.GeneratedDemoData;
+import ai.timefold.sdk.core.api.domain.ModelRequest;
+import ai.timefold.sdk.quarkus.deployment.defaults.EmptyModelConfigOverrides;
 
 import org.acme.bedallocation.domain.Bed;
 import org.acme.bedallocation.domain.BedPlan;
@@ -32,7 +32,7 @@ import org.acme.bedallocation.domain.Room;
 import org.acme.bedallocation.domain.Stay;
 
 @ApplicationScoped
-public class DemoDataGenerator implements ai.timefold.models.sdk.api.data.DemoDataGenerator {
+public class DemoDataGenerator implements ai.timefold.sdk.core.api.data.DemoDataGenerator {
 
     public enum DemoData {
         SMALL,

@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import ai.timefold.models.sdk.api.ModelInput;
-import ai.timefold.models.sdk.api.ModelOutput;
-import ai.timefold.models.sdk.maps.service.integration.LocationsAwareSolverModel;
-import ai.timefold.models.sdk.maps.service.integration.model.Location;
-import ai.timefold.quarkus.models.sdk.defaults.EmptyModelKpi;
+import ai.timefold.sdk.core.api.ModelInput;
+import ai.timefold.sdk.core.api.ModelOutput;
+import ai.timefold.sdk.maps.service.integration.api.LocationsAwareSolverModel;
+import ai.timefold.sdk.maps.service.integration.api.model.Location;
+import ai.timefold.sdk.quarkus.deployment.defaults.EmptyModelKpi;
 import ai.timefold.solver.core.api.domain.solution.PlanningEntityCollectionProperty;
 import ai.timefold.solver.core.api.domain.solution.PlanningScore;
 import ai.timefold.solver.core.api.domain.solution.PlanningSolution;

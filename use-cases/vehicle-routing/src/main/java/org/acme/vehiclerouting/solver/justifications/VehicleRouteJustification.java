@@ -1,6 +1,6 @@
 package org.acme.vehiclerouting.solver.justifications;
 
-import ai.timefold.models.sdk.api.ModelConstraintJustification;
+import ai.timefold.sdk.core.api.ModelConstraintJustification;
 
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 

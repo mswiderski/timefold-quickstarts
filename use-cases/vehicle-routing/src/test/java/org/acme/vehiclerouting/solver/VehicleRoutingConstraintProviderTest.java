@@ -10,8 +10,8 @@ import java.util.Map;
 
 import jakarta.inject.Inject;
 
-import ai.timefold.models.sdk.maps.service.integration.DistanceMatrix;
-import ai.timefold.models.sdk.maps.service.integration.model.Location;
+import ai.timefold.sdk.maps.service.integration.api.DistanceMatrix;
+import ai.timefold.sdk.maps.service.integration.api.model.Location;
 import ai.timefold.solver.test.api.score.stream.ConstraintVerifier;
 
 import org.acme.vehiclerouting.domain.Vehicle;

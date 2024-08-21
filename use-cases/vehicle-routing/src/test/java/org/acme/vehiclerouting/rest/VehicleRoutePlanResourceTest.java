@@ -15,14 +15,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import ai.timefold.models.sdk.api.SolvingStatus;
-import ai.timefold.models.sdk.api.analysis.ScoreAnalysisConstraintDetail;
-import ai.timefold.models.sdk.api.analysis.ScoreAnalysisDetail;
-import ai.timefold.models.sdk.api.domain.ModelConfig;
-import ai.timefold.models.sdk.api.domain.ScoreAnalysisConfig;
-import ai.timefold.models.sdk.api.domain.ScoreAnalysisRequest;
-import ai.timefold.models.sdk.maps.service.integration.model.Location;
-import ai.timefold.quarkus.models.sdk.defaults.EmptyModelConfigOverrides;
+import ai.timefold.sdk.core.api.SolvingStatus;
+import ai.timefold.sdk.core.api.analysis.ScoreAnalysisConstraintDetail;
+import ai.timefold.sdk.core.api.analysis.ScoreAnalysisDetail;
+import ai.timefold.sdk.core.api.domain.ModelConfig;
+import ai.timefold.sdk.core.api.domain.ScoreAnalysisConfig;
+import ai.timefold.sdk.core.api.domain.ScoreAnalysisRequest;
+import ai.timefold.sdk.maps.service.integration.api.model.Location;
+import ai.timefold.sdk.quarkus.deployment.defaults.EmptyModelConfigOverrides;
 import ai.timefold.solver.core.api.score.analysis.ScoreAnalysis;
 import ai.timefold.solver.core.api.score.buildin.hardsoftlong.HardSoftLongScore;
 

@@ -2,10 +2,9 @@ package org.acme.bedallocation.domain;
 
 import java.util.List;
 
-import ai.timefold.models.sdk.api.ModelInput;
-import ai.timefold.models.sdk.api.ModelOutput;
-import ai.timefold.models.sdk.api.SolverModel;
-import ai.timefold.quarkus.models.sdk.defaults.EmptyModelKpi;
+import ai.timefold.sdk.core.api.ModelInput;
+import ai.timefold.sdk.core.api.ModelOutput;
+import ai.timefold.sdk.core.api.SolverModel;
 import ai.timefold.solver.core.api.domain.solution.PlanningEntityCollectionProperty;
 import ai.timefold.solver.core.api.domain.solution.PlanningScore;
 import ai.timefold.solver.core.api.domain.solution.PlanningSolution;
@@ -20,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @PlanningSolution
-public class BedPlan implements ModelInput, ModelOutput, SolverModel<HardMediumSoftScore, EmptyModelKpi> {
+public class BedPlan implements ModelInput, ModelOutput, SolverModel<HardMediumSoftScore, BedAllocationKpis> {
 
     @ProblemFactCollectionProperty
     private List<Department> departments;
@@ -103,8 +102,8 @@ public class BedPlan implements ModelInput, ModelOutput, SolverModel<HardMediumS
 
     @JsonIgnore
     @Override
-    public EmptyModelKpi getKpis() {
-        return new EmptyModelKpi();
+    public BedAllocationKpis getKpis() {
+        return new BedAllocationKpis();
     }
 
 }

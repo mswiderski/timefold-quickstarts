@@ -6,9 +6,9 @@ import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
-import ai.timefold.models.sdk.maps.service.integration.WaypointsExtractor;
-import ai.timefold.models.sdk.maps.service.integration.model.Location;
-import ai.timefold.models.sdk.maps.service.integration.model.Waypoints;
+import ai.timefold.sdk.maps.service.integration.api.WaypointsExtractor;
+import ai.timefold.sdk.maps.service.integration.api.model.Location;
+import ai.timefold.sdk.maps.service.integration.api.model.Waypoints;
 
 import org.acme.vehiclerouting.domain.Vehicle;
 import org.acme.vehiclerouting.domain.VehicleRoutePlan;
