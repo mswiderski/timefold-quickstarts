@@ -45,13 +45,6 @@
               </a>
             </li>
           </ul>
-          <div class="vr mx-2"></div>
-          <div class="dropdown ">
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Data
-            </button>
-            <div id="testDataButton" class="dropdown-menu" aria-labelledby="dropdownMenuButton"></div>
-          </div>
         </div>
       </div>
     </nav>
@@ -130,7 +123,7 @@
     <pre>
             <button class="btn btn-outline-dark btn-sm float-end"
                     onclick="copyTextToClipboard('curl1')">Copy</button>
-            <code id="curl1">curl -X GET -H 'Accept:application/json' http://localhost:8080/demo-data/SMALL -o sample.json</code>
+            <code id="curl1">curl -X GET -H 'Accept:application/json' http://localhost:8080/v1/demo-data/BASIC -o sample.json</code>
     </pre>
 
     <h3>2. Post the sample data for solving</h3>
@@ -138,28 +131,28 @@
     <pre>
             <button class="btn btn-outline-dark btn-sm float-end"
                     onclick="copyTextToClipboard('curl2')">Copy</button>
-            <code id="curl2">curl -X POST -H 'Content-Type:application/json' http://localhost:8080/timetables -d@sample.json</code>
+            <code id="curl2">curl -X POST -H 'Content-Type:application/json' http://localhost:8080/v1/timetables -d@sample.json</code>
     </pre>
 
     <h3>3. Get the current status and score</h3>
     <pre>
             <button class="btn btn-outline-dark btn-sm float-end"
                     onclick="copyTextToClipboard('curl3')">Copy</button>
-            <code id="curl3">curl -X GET -H 'Accept:application/json' http://localhost:8080/timetables/{jobId}/status</code>
+            <code id="curl3">curl -X GET -H 'Accept:application/json' http://localhost:8080/v1/timetables/{jobId}</code>
     </pre>
 
     <h3>4. Get the complete solution</h3>
     <pre>
             <button class="btn btn-outline-dark btn-sm float-end"
                     onclick="copyTextToClipboard('curl4')">Copy</button>
-            <code id="curl4">curl -X GET -H 'Accept:application/json' http://localhost:8080/timetables/{jobId}</code>
+            <code id="curl4">curl -X GET -H 'Accept:application/json' http://localhost:8080/v1/timetables/{jobId}</code>
     </pre>
 
     <h3>5. Terminate solving early</h3>
     <pre>
             <button class="btn btn-outline-dark btn-sm float-end"
                     onclick="copyTextToClipboard('curl5')">Copy</button>
-            <code id="curl5">curl -X DELETE -H 'Accept:application/json' http://localhost:8080/timetables/{id}</code>
+            <code id="curl5">curl -X DELETE -H 'Accept:application/json' http://localhost:8080/v1/timetables/{id}</code>
     </pre>
   </div>
 
