@@ -1,34 +1,26 @@
-package org.acme.facilitylocation.bootstrap;
+package org.acme.facilitylocation.demo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.acme.facilitylocation.domain.FacilityLocationProblem;
-import org.acme.facilitylocation.domain.Location;
+import org.acme.facilitylocation.dto.FacilityLocationInput;
+import org.acme.facilitylocation.dto.LocationDTO;
 import org.junit.jupiter.api.Test;
 
 class DemoDataBuilderTest {
 
     @Test
     void shouldBuildData() {
-        FacilityLocationProblem problem = DemoDataBuilder.builder()
-                .setCapacity(1000)
-                .setDemand(900)
-                .setAverageSetupCost(1000).setSetupCostStandardDeviation(200)
-                .setFacilityCount(10)
-                .setConsumerCount(150)
-                .setSouthWestCorner(new Location(-10, -10))
-                .setNorthEastCorner(new Location(20, 20))
-                .build();
+        FacilityLocationInput problem = DemoDataBuilder.builder().setCapacity(1000).setDemand(900)
+                .setAverageSetupCost(1000).setSetupCostStandardDeviation(200).setFacilityCount(10).setConsumerCount(150)
+                .setSouthWestCorner(new LocationDTO(-10, -10)).setNorthEastCorner(new LocationDTO(20, 20)).build();
 
-        assertEquals(10, problem.getFacilities().size());
-        // Show toString().
-        problem.getFacilities().forEach(facility -> assertEquals(100, facility.getCapacity()));
+        assertEquals(10, problem.facilities().size());
+        problem.facilities().forEach(facility -> assertEquals(100, facility.capacity()));
 
-        assertEquals(150, problem.getConsumers().size());
-        // Show toString().
-        problem.getConsumers().forEach(consumer -> assertEquals(6, consumer.getDemand()));
+        assertEquals(150, problem.consumers().size());
+        problem.consumers().forEach(consumer -> assertEquals(6, consumer.demand()));
     }
 
     @Test
@@ -75,14 +67,8 @@ class DemoDataBuilderTest {
     }
 
     static DemoDataBuilder correctBuilder() {
-        return DemoDataBuilder.builder()
-                .setSouthWestCorner(new Location(-1, -1))
-                .setNorthEastCorner(new Location(1, 1))
-                .setCapacity(20)
-                .setDemand(10)
-                .setConsumerCount(1)
-                .setFacilityCount(1)
-                .setAverageSetupCost(100)
-                .setSetupCostStandardDeviation(1);
+        return DemoDataBuilder.builder().setSouthWestCorner(new LocationDTO(-1, -1))
+                .setNorthEastCorner(new LocationDTO(1, 1)).setCapacity(20).setDemand(10).setConsumerCount(1)
+                .setFacilityCount(1).setAverageSetupCost(100).setSetupCostStandardDeviation(1);
     }
 }
