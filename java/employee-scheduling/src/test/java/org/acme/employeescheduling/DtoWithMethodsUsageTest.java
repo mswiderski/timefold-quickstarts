@@ -27,7 +27,7 @@ class DtoWithMethodsUsageTest {
                 .withUndesiredDates(List.of("2024-03-01"))
                 .withDesiredDates(List.of("2024-04-01"));
 
-        var baseShift = new ShiftDTO("s1", "2024-01-01T09:00:00", "2024-01-01T17:00:00", "Location", "Skill1", null);
+        var baseShift = new ShiftDTO("s1", "2024-01-01T09:00:00", "2024-01-01T17:00:00", "Location", "Skill1", "");
         var updatedShift = baseShift
                 .withId("s2")
                 .withStart("2024-02-01T09:00:00")

@@ -159,8 +159,8 @@ public final class DemoDataBuilder {
                         } else {
                             skill = pickRandom(optionalSkills, random);
                         }
-                        shiftQueue.add(new ShiftDTO(null, shiftStart.toString(), shiftEnd.toString(), location, skill,
-                                null));
+                        shiftQueue.add(new ShiftDTO("", shiftStart.toString(), shiftEnd.toString(), location, skill,
+                                ""));
                     }
                 }
             }
