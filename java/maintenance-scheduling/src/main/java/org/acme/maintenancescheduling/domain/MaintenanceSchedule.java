@@ -4,6 +4,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 
+import ai.timefold.solver.core.api.domain.solution.ConstraintWeightOverrides;
 import ai.timefold.solver.core.api.domain.solution.PlanningEntityCollectionProperty;
 import ai.timefold.solver.core.api.domain.solution.PlanningScore;
 import ai.timefold.solver.core.api.domain.solution.PlanningSolution;
@@ -11,10 +12,16 @@ import ai.timefold.solver.core.api.domain.solution.ProblemFactCollectionProperty
 import ai.timefold.solver.core.api.domain.solution.ProblemFactProperty;
 import ai.timefold.solver.core.api.domain.valuerange.ValueRangeProvider;
 import ai.timefold.solver.core.api.score.HardSoftScore;
-import ai.timefold.solver.core.api.solver.SolverStatus;
+import ai.timefold.solver.service.definition.api.SolverModel;
+import ai.timefold.solver.service.definition.api.metrics.InputMetricsAware;
+import ai.timefold.solver.service.definition.api.metrics.OutputMetricsAware;
+
+import org.acme.maintenancescheduling.dto.MaintenanceScheduleInputMetrics;
+import org.acme.maintenancescheduling.dto.MaintenanceScheduleOutputMetrics;
 
 @PlanningSolution
-public class MaintenanceSchedule {
+public class MaintenanceSchedule implements SolverModel<HardSoftScore>,
+        InputMetricsAware<MaintenanceScheduleInputMetrics>, OutputMetricsAware<MaintenanceScheduleOutputMetrics> {
 
     @ProblemFactProperty
     private WorkCalendar workCalendar;
@@ -27,23 +34,15 @@ public class MaintenanceSchedule {
     @PlanningScore
     private HardSoftScore score;
 
-    // Ignored by Timefold, used by the UI to display solve or stop solving button
-    private SolverStatus solverStatus;
+    private ConstraintWeightOverrides<HardSoftScore> constraintWeightOverrides = ConstraintWeightOverrides.none();
 
-    // No-arg constructor required for Timefold
     public MaintenanceSchedule() {
     }
 
-    public MaintenanceSchedule(WorkCalendar workCalendar,
-            List<Crew> crews, List<Job> jobs) {
+    public MaintenanceSchedule(WorkCalendar workCalendar, List<Crew> crews, List<Job> jobs) {
         this.workCalendar = workCalendar;
         this.crews = crews;
         this.jobs = jobs;
-    }
-
-    public MaintenanceSchedule(HardSoftScore score, SolverStatus solverStatus) {
-        this.score = score;
-        this.solverStatus = solverStatus;
     }
 
     @ValueRangeProvider
@@ -56,10 +55,6 @@ public class MaintenanceSchedule {
                         && date.getDayOfWeek() != DayOfWeek.SUNDAY)
                 .toList();
     }
-
-    // ************************************************************************
-    // Getters and setters
-    // ************************************************************************
 
     public WorkCalendar getWorkCalendar() {
         return workCalendar;
@@ -85,6 +80,7 @@ public class MaintenanceSchedule {
         this.jobs = jobs;
     }
 
+    @Override
     public HardSoftScore getScore() {
         return score;
     }
@@ -93,11 +89,31 @@ public class MaintenanceSchedule {
         this.score = score;
     }
 
-    public SolverStatus getSolverStatus() {
-        return solverStatus;
+    @Override
+    public ConstraintWeightOverrides<HardSoftScore> getConstraintWeightOverrides() {
+        return constraintWeightOverrides;
     }
 
-    public void setSolverStatus(SolverStatus solverStatus) {
-        this.solverStatus = solverStatus;
+    public void setConstraintWeightOverrides(ConstraintWeightOverrides<HardSoftScore> constraintWeightOverrides) {
+        this.constraintWeightOverrides = constraintWeightOverrides;
+    }
+
+    @Override
+    public MaintenanceScheduleInputMetrics getInputMetrics() {
+        long tags = jobs.stream().flatMap(job -> job.getTags().stream()).distinct().count();
+        return new MaintenanceScheduleInputMetrics(jobs.size(), crews.size(), (int) tags);
+    }
+
+    @Override
+    public MaintenanceScheduleOutputMetrics getOutputMetrics() {
+        int assignedJobs = (int) jobs.stream().filter(Job::isAssigned).count();
+        int unassignedJobs = jobs.size() - assignedJobs;
+        int usedCrews = (int) jobs.stream().filter(Job::isAssigned).map(Job::getCrew).distinct().count();
+        return new MaintenanceScheduleOutputMetrics(assignedJobs, unassignedJobs, usedCrews);
+    }
+
+    @Override
+    public String toString() {
+        return "MaintenanceSchedule{jobs: " + jobs.size() + ", score: " + score + '}';
     }
 }
