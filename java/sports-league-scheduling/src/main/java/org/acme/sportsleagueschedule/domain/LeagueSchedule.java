@@ -2,16 +2,23 @@ package org.acme.sportsleagueschedule.domain;
 
 import java.util.List;
 
+import ai.timefold.solver.core.api.domain.solution.ConstraintWeightOverrides;
 import ai.timefold.solver.core.api.domain.solution.PlanningEntityCollectionProperty;
 import ai.timefold.solver.core.api.domain.solution.PlanningScore;
 import ai.timefold.solver.core.api.domain.solution.PlanningSolution;
 import ai.timefold.solver.core.api.domain.solution.ProblemFactCollectionProperty;
 import ai.timefold.solver.core.api.domain.valuerange.ValueRangeProvider;
 import ai.timefold.solver.core.api.score.HardSoftScore;
-import ai.timefold.solver.core.api.solver.SolverStatus;
+import ai.timefold.solver.service.definition.api.SolverModel;
+import ai.timefold.solver.service.definition.api.metrics.InputMetricsAware;
+import ai.timefold.solver.service.definition.api.metrics.OutputMetricsAware;
+
+import org.acme.sportsleagueschedule.dto.LeagueScheduleInputMetrics;
+import org.acme.sportsleagueschedule.dto.LeagueScheduleOutputMetrics;
 
 @PlanningSolution
-public class LeagueSchedule {
+public class LeagueSchedule implements SolverModel<HardSoftScore>,
+        InputMetricsAware<LeagueScheduleInputMetrics>, OutputMetricsAware<LeagueScheduleOutputMetrics> {
 
     @ValueRangeProvider
     @ProblemFactCollectionProperty
@@ -22,14 +29,16 @@ public class LeagueSchedule {
     private List<Match> matches;
     @PlanningScore
     private HardSoftScore score;
-    private SolverStatus solverStatus;
+
+    private ConstraintWeightOverrides<HardSoftScore> constraintWeightOverrides = ConstraintWeightOverrides.none();
 
     public LeagueSchedule() {
     }
 
-    public LeagueSchedule(HardSoftScore score, SolverStatus solverStatus) {
-        this.score = score;
-        this.solverStatus = solverStatus;
+    public LeagueSchedule(List<Round> rounds, List<Team> teams, List<Match> matches) {
+        this.rounds = rounds;
+        this.teams = teams;
+        this.matches = matches;
     }
 
     public List<Round> getRounds() {
@@ -52,10 +61,11 @@ public class LeagueSchedule {
         return matches;
     }
 
-    public void setMatches(List<Match> matchSets) {
-        this.matches = matchSets;
+    public void setMatches(List<Match> matches) {
+        this.matches = matches;
     }
 
+    @Override
     public HardSoftScore getScore() {
         return score;
     }
@@ -64,11 +74,34 @@ public class LeagueSchedule {
         this.score = score;
     }
 
-    public SolverStatus getSolverStatus() {
-        return solverStatus;
+    @Override
+    public ConstraintWeightOverrides<HardSoftScore> getConstraintWeightOverrides() {
+        return constraintWeightOverrides;
     }
 
-    public void setSolverStatus(SolverStatus solverStatus) {
-        this.solverStatus = solverStatus;
+    public void setConstraintWeightOverrides(ConstraintWeightOverrides<HardSoftScore> constraintWeightOverrides) {
+        this.constraintWeightOverrides = constraintWeightOverrides;
+    }
+
+    @Override
+    public LeagueScheduleInputMetrics getInputMetrics() {
+        return new LeagueScheduleInputMetrics(matches.size(), teams.size(), rounds.size());
+    }
+
+    @Override
+    public LeagueScheduleOutputMetrics getOutputMetrics() {
+        int assignedMatches = (int) matches.stream().filter(match -> match.getRound() != null).count();
+        int unassignedMatches = matches.size() - assignedMatches;
+        int usedRounds = (int) matches.stream()
+                .filter(match -> match.getRound() != null)
+                .map(Match::getRound)
+                .distinct()
+                .count();
+        return new LeagueScheduleOutputMetrics(assignedMatches, unassignedMatches, usedRounds);
+    }
+
+    @Override
+    public String toString() {
+        return "LeagueSchedule{matches: " + matches.size() + ", score: " + score + '}';
     }
 }
