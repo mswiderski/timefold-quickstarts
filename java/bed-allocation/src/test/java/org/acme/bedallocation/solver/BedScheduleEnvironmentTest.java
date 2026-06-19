@@ -1,9 +1,9 @@
-package org.acme.bedallocation.rest;
+package org.acme.bedallocation.solver;
 
-import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import jakarta.inject.Inject;
 
@@ -11,8 +11,10 @@ import ai.timefold.solver.core.api.solver.Solver;
 import ai.timefold.solver.core.api.solver.SolverFactory;
 import ai.timefold.solver.core.config.solver.EnvironmentMode;
 import ai.timefold.solver.core.config.solver.SolverConfig;
+import ai.timefold.solver.service.definition.api.domain.ModelConfig;
 
-import org.acme.bedallocation.domain.BedPlan;
+import org.acme.bedallocation.domain.BedSchedule;
+import org.acme.bedallocation.service.BedScheduleModelConvertor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
@@ -20,10 +22,13 @@ import io.quarkus.test.junit.QuarkusTest;
 
 @QuarkusTest
 @EnabledIfSystemProperty(named = "slowly", matches = "true")
-class BedSchedulingEnvironmentTest {
+class BedScheduleEnvironmentTest {
 
     @Inject
     SolverConfig solverConfig;
+
+    @Inject
+    BedScheduleModelConvertor modelConvertor;
 
     @Test
     void solveFullAssert() {
@@ -36,24 +41,16 @@ class BedSchedulingEnvironmentTest {
     }
 
     void solve(EnvironmentMode environmentMode) {
-        // Load the problem
-        BedPlan problem = given()
-                .when().get("/demo-data")
-                .then()
-                .statusCode(200)
-                .extract()
-                .as(BedPlan.class);
+        var input = SolverTestDataFactory.createProblem();
+        BedSchedule problem = modelConvertor.toSolverModel(input, ModelConfig.empty(), Optional.empty());
 
-        // Update the environment
         SolverConfig updatedConfig = solverConfig.copyConfig();
-        updatedConfig.withEnvironmentMode(environmentMode)
-                .withTerminationSpentLimit(Duration.ofSeconds(30))
+        updatedConfig.withEnvironmentMode(environmentMode).withTerminationSpentLimit(Duration.ofSeconds(30))
                 .getTerminationConfig().withBestScoreLimit(null);
-        SolverFactory<BedPlan> solverFactory = SolverFactory.create(updatedConfig);
+        SolverFactory<BedSchedule> solverFactory = SolverFactory.create(updatedConfig);
 
-        // Solve the problem
-        Solver<BedPlan> solver = solverFactory.buildSolver();
-        BedPlan solution = solver.solve(problem);
+        Solver<BedSchedule> solver = solverFactory.buildSolver();
+        BedSchedule solution = solver.solve(problem);
         assertThat(solution.getScore()).isNotNull();
     }
 }
