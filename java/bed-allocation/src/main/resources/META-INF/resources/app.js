@@ -12,7 +12,7 @@ var byRoomGroupData = new vis.DataSet();
 var byRoomItemData = new vis.DataSet();
 var byRoomTimeline = new vis.Timeline(byRoomPanel, byRoomItemData, byRoomGroupData, byRoomTimelineOptions);
 
-let scheduleId = null;
+let jobId = null;
 let loadedSchedule = null;
 let viewType = "R";
 
@@ -29,14 +29,14 @@ $(document).ready(function () {
     $("#byRoomTab").click(function () {
         viewType = "R";
         byRoomTimeline.redraw();
-        refreshSchedule();
+        getStatus();
     });
 
     addImportDropdownItem();
     addExportDropdownItem();
 
     setupAjax();
-    refreshSchedule();
+    getStatus();
 });
 
 function addImportDropdownItem() {
@@ -45,8 +45,7 @@ function addImportDropdownItem() {
         .append($('<a id="importTestData" class="dropdown-item" href="#">Import</a>'));
     $("#uploadModalImportButton").click(importLocalFile);
     $("#importTestData").click(function () {
-        scheduleId = null;
-        demoDataId = null;
+        jobId = null;
         $('#uploadModal').modal('show');
     });
 }
@@ -78,27 +77,39 @@ function setupAjax() {
     });
 }
 
-function refreshSchedule() {
-    let path = "/schedules/" + scheduleId;
-    if (scheduleId === null) {
-        path = "/demo-data";
-    }
-
-    $.getJSON(path, function (schedule) {
-        loadedSchedule = schedule;
-        $('#exportData').attr('href', 'data:text/plain;charset=utf-8,' + JSON.stringify(loadedSchedule));
-        renderSchedule(schedule);
-    })
-        .fail(function (xhr, ajaxOptions, thrownError) {
+function getStatus() {
+    if (jobId == null) {
+        $.get('/v1/demo-data/BASIC', function (data) {
+            loadedSchedule = data.modelInput;
+            $('#exportData').attr('href', 'data:text/plain;charset=utf-8,' + JSON.stringify(loadedSchedule));
+            renderSchedule(loadedSchedule, 'NOT_SOLVING');
+        }).fail(function (xhr, ajaxOptions, thrownError) {
             showError("Getting the schedule has failed.", xhr);
-            refreshSolvingButtons(false);
+            refreshSolvingButtons('NOT_SOLVING');
         });
+    } else {
+        $.get(`/v1/schedules/${jobId}`, function (data) {
+            const solverStatus = data.metadata.solverStatus;
+            const solution = data.modelOutput || loadedSchedule;
+            loadedSchedule = solution;
+            $('#exportData').attr('href', 'data:text/plain;charset=utf-8,' + JSON.stringify(loadedSchedule));
+            renderSchedule(solution, solverStatus);
+        }).fail(function (xhr, ajaxOptions, thrownError) {
+            showError("Getting the schedule has failed.", xhr);
+            refreshSolvingButtons('NOT_SOLVING');
+        });
+    }
 }
 
-function renderSchedule(schedule) {
-    refreshSolvingButtons(schedule.solverStatus != null && schedule.solverStatus !== "NOT_SOLVING");
+function isSolving(solverStatus) {
+    return solverStatus === 'SOLVING_ACTIVE' || solverStatus === 'SOLVING_SCHEDULED'
+        || solverStatus === 'SOLVING_STARTED';
+}
+
+function renderSchedule(schedule, solverStatus) {
+    refreshSolvingButtons(solverStatus);
     $("#score").text("Score: " + (schedule.score == null ? "?" : schedule.score));
-    $("#info").text(`This dataset has ${schedule.stays.length} stays and ${schedule.departments.flatMap(d => d.rooms).length} beds across ${schedule.departments.length} departments.`);
+    $("#info").text(`This dataset has ${schedule.stays.length} stays and ${schedule.beds.length} beds across ${schedule.departments.length} departments.`);
 
     if (viewType === "R") {
         renderScheduleByRoom(schedule);
@@ -112,7 +123,7 @@ function renderScheduleByRoom(schedule) {
     byRoomGroupData.clear();
     byRoomItemData.clear();
 
-    $.each(schedule.departments.flatMap(d => d.rooms), (_, room) => {
+    $.each(schedule.rooms, (_, room) => {
         let content = `<div class="d-flex flex-column"><div><h5 class="card-title mb-1">${room.name}</h5></div>`;
         if (room.equipments.length > 0) {
             let equipments = room.equipments.sort().slice(0, Math.min(2, room.equipments.length));
@@ -127,14 +138,15 @@ function renderScheduleByRoom(schedule) {
             }
         }
 
+        const roomBeds = schedule.beds.filter(b => b.roomId === room.id);
         const roomData = {
             id: room.id,
             content: content,
             treeLevel: 1,
-            nestedLevels: [...room.beds.map(b => b.id)]
+            nestedLevels: [...roomBeds.map(b => b.id)]
         };
         byRoomGroupData.add(roomData);
-        room.beds.forEach(bed => byRoomGroupData.add({
+        roomBeds.forEach(bed => byRoomGroupData.add({
             id: bed.id,
             content: `Bed ${bed.indexInRoom + 1}`,
             treeLevel: 2
@@ -142,13 +154,13 @@ function renderScheduleByRoom(schedule) {
     });
 
     const bedMap = new Map();
-    schedule.departments.flatMap(d => d.rooms).flatMap(r => r.beds).forEach(b => bedMap.set(b.id, b));
+    schedule.beds.forEach(b => bedMap.set(b.id, b));
 
     $.each(schedule.stays, (_, stay) => {
         const bgcolor = stay.patientGender === 'MALE' ? '#729FCF' : '#FCE94F';
         const color = stay.patientGender === 'MALE' ? 'white' : 'black';
 
-        if (stay.bed == null) {
+        if (stay.bedId == null) {
             unassignedJobsCount++;
             const unassignedPatientElement = $(`<div class="card-body p-2"/>`)
                 .append($(`<h5 class="card-title mb-1"/>`).text(`${stay.patientName} (${stay.patientGender.substring(0, 1)})`))
@@ -211,7 +223,7 @@ function renderScheduleByRoom(schedule) {
 
             byRoomItemData.add({
                 id: stay.id,
-                group: stay.bed,
+                group: stay.bedId,
                 content: byPatientElement.html(),
                 start: stay.arrivalDate,
                 end: stay.departureDate,
@@ -236,24 +248,34 @@ function renderScheduleByRoom(schedule) {
 }
 
 function solve() {
-    $.post("/schedules", JSON.stringify(loadedSchedule), function (data) {
-        scheduleId = data;
-        refreshSolvingButtons(true);
+    $.get('/v1/demo-data/BASIC', function (modelRequest) {
+        modelRequest.modelInput = loadedSchedule;
+        $.post('/v1/schedules', JSON.stringify(modelRequest), function (metadata) {
+            jobId = metadata.id;
+            refreshSolvingButtons(metadata.solverStatus || 'SOLVING_ACTIVE');
+            if (autoRefreshIntervalId == null) {
+                autoRefreshIntervalId = setInterval(getStatus, 2000);
+            }
+        }).fail(function (xhr, ajaxOptions, thrownError) {
+            showError("Start solving failed.", xhr);
+            refreshSolvingButtons('NOT_SOLVING');
+        });
     }).fail(function (xhr, ajaxOptions, thrownError) {
-        showError("Start solving failed.", xhr);
-        refreshSolvingButtons(false);
-    }, "text");
+        showError("Get demo data failed.", xhr);
+    });
 }
 
 function analyze() {
     new bootstrap.Modal("#scoreAnalysisModal").show()
     const scoreAnalysisModalContent = $("#scoreAnalysisModalContent");
     scoreAnalysisModalContent.children().remove();
-    if (loadedSchedule.score == null) {
+    if (loadedSchedule == null || loadedSchedule.score == null) {
         scoreAnalysisModalContent.text("No score to analyze yet, please first press the 'solve' button.");
+    } else if (jobId == null) {
+        scoreAnalysisModalContent.text("No solving job yet, please first press the 'solve' button.");
     } else {
         $('#scoreAnalysisScoreLabel').text(`(${loadedSchedule.score})`);
-        $.put("/schedules/analyze", JSON.stringify(loadedSchedule), function (scoreAnalysis) {
+        $.get(`/v1/schedules/${jobId}/score-analysis`, function (scoreAnalysis) {
             let constraints = scoreAnalysis.constraints;
             constraints.sort((a, b) => {
                 let aComponents = getScoreComponents(a.score), bComponents = getScoreComponents(b.score);
@@ -303,7 +325,7 @@ function analyze() {
 
                 let row = $(`<tr/>`);
                 row.append($(`<td/>`).html(icon))
-                    .append($(`<td/>`).text(constraintAnalysis.id).css({textAlign: 'left'}))
+                    .append($(`<td/>`).text(constraintAnalysis.name).css({textAlign: 'left'}))
                     .append($(`<td/>`).text(constraintAnalysis.type))
                     .append($(`<td/>`).html(`<b>${constraintAnalysis.matches.length}</b>`))
                     .append($(`<td/>`).text(constraintAnalysis.weight))
@@ -325,19 +347,6 @@ function analyze() {
     }
 }
 
-function publish() {
-    $("#publishButton").hide();
-    $("#publishLoadingButton").show();
-    $.put(`/schedules/${scheduleId}/publish`, function (schedule) {
-        loadedSchedule = schedule;
-        renderSchedule(schedule);
-    })
-        .fail(function (xhr, ajaxOptions, thrownError) {
-            showError("Publish failed.", xhr);
-            refreshSolvingButtons(false);
-        });
-}
-
 function getScoreComponents(score) {
     let components = {hard: 0, medium: 0, soft: 0};
 
@@ -348,12 +357,12 @@ function getScoreComponents(score) {
     return components;
 }
 
-function refreshSolvingButtons(solving) {
-    if (solving) {
+function refreshSolvingButtons(solverStatus) {
+    if (isSolving(solverStatus)) {
         $("#solveButton").hide();
         $("#stopSolvingButton").show();
         if (autoRefreshIntervalId == null) {
-            autoRefreshIntervalId = setInterval(refreshSchedule, 2000);
+            autoRefreshIntervalId = setInterval(getStatus, 2000);
         }
     } else {
         $("#solveButton").show();
@@ -366,9 +375,9 @@ function refreshSolvingButtons(solving) {
 }
 
 function stopSolving() {
-    $.delete("/schedules/" + scheduleId, function () {
-        refreshSolvingButtons(false);
-        refreshSchedule();
+    $.delete(`/v1/schedules/${jobId}`, function () {
+        refreshSolvingButtons('NOT_SOLVING');
+        getStatus();
     }).fail(function (xhr, ajaxOptions, thrownError) {
         showError("Stop solving failed.", xhr);
     });
@@ -385,7 +394,7 @@ function importLocalFile() {
 
         try {
             loadedSchedule = JSON.parse(data);
-            renderSchedule(loadedSchedule);
+            renderSchedule(loadedSchedule, 'NOT_SOLVING');
             $('#exportData').attr('href', 'data:text/plain;charset=utf-8,' + JSON.stringify(loadedSchedule));
         } catch (error) {
             console.error(error);
