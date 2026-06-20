@@ -34,11 +34,11 @@ $(document).ready(function () {
     });
     $("#byTeamTab").click(function () {
         viewType = "T";
-        refreshSchedule();
+        getStatus();
     });
 
     setupAjax();
-    refreshSchedule();
+    getStatus();
 });
 
 function setupAjax() {
@@ -63,25 +63,37 @@ function setupAjax() {
     });
 }
 
-function refreshSchedule() {
-    let path = "/schedules/" + scheduleId;
-    if (scheduleId === null) {
-        path = "/demo-data";
-    }
+function isSolving(solverStatus) {
+    return solverStatus === 'SOLVING_ACTIVE' || solverStatus === 'SOLVING_SCHEDULED'
+        || solverStatus === 'SOLVING_STARTED';
+}
 
-    $.getJSON(path, function (schedule) {
-        loadedSchedule = schedule;
-        $('#exportData').attr('href', 'data:text/plain;charset=utf-8,' + JSON.stringify(loadedSchedule));
-        renderSchedule(schedule);
-    })
-        .fail(function (xhr, ajaxOptions, thrownError) {
+function getStatus() {
+    if (scheduleId == null) {
+        $.getJSON("/v1/demo-data/BASIC", function (data) {
+            loadedSchedule = data.modelInput;
+            $('#exportData').attr('href', 'data:text/plain;charset=utf-8,' + JSON.stringify(loadedSchedule));
+            renderSchedule(loadedSchedule, 'NOT_SOLVING');
+        }).fail(function (xhr) {
+            showError("Getting the demo data has failed.", xhr);
+            refreshSolvingButtons(false);
+        });
+    } else {
+        $.getJSON(`/v1/schedules/${scheduleId}`, function (data) {
+            const solverStatus = data.metadata.solverStatus;
+            const solution = data.modelOutput || loadedSchedule;
+            loadedSchedule = solution;
+            $('#exportData').attr('href', 'data:text/plain;charset=utf-8,' + JSON.stringify(loadedSchedule));
+            renderSchedule(solution, solverStatus);
+        }).fail(function (xhr) {
             showError("Getting the schedule has failed.", xhr);
             refreshSolvingButtons(false);
         });
+    }
 }
 
-function renderSchedule(schedule) {
-    refreshSolvingButtons(schedule.solverStatus != null && schedule.solverStatus !== "NOT_SOLVING");
+function renderSchedule(schedule, solverStatus) {
+    refreshSolvingButtons(isSolving(solverStatus));
     $("#score").text("Score: " + (schedule.score == null ? "?" : schedule.score));
     $("#info").text(`This dataset has ${schedule.matches.length} matches (${schedule.rounds.length} rounds) for ${schedule.teams.length} teams.`);
 
@@ -108,9 +120,9 @@ function renderScheduleByTeam(schedule) {
 
     const currentDate = JSJoda.LocalDate.now();
     $.each(schedule.matches, (_, match) => {
-        const homeTeam = teamMap.get(match.homeTeam);
-        const awayTeam = teamMap.get(match.awayTeam);
-        if (match.round == null) {
+        const homeTeam = teamMap.get(match.homeTeamId);
+        const awayTeam = teamMap.get(match.awayTeamId);
+        if (match.roundIndex == null) {
             const unassignedElement = $(`<div class="card-body" style="background-color: ${match.classicMatch ? '#009E73' : '#0072B2'}; color: white"/>`)
                 .append($(`<h5 class="card-title mb-1"/>`).text(`${homeTeam.name} x ${awayTeam.name}`));
 
@@ -122,16 +134,16 @@ function renderScheduleByTeam(schedule) {
                 id: `${match.id}-1`,
                 group: homeTeam.id,
                 content: byHomeTeamElement.html(),
-                start: currentDate.plusDays(match.round).toString(),
-                end: currentDate.plusDays(match.round + 1).toString(),
+                start: currentDate.plusDays(match.roundIndex).toString(),
+                end: currentDate.plusDays(match.roundIndex + 1).toString(),
                 style: `background-color: ${match.classicMatch ? '#009E73' : '#0072B2'}; color: white`
             });
             byTeamItemData.add({
                 id: `${match.id}-2`,
                 group: awayTeam.id,
                 content: byAwayTeamElement.html(),
-                start: currentDate.plusDays(match.round).toString(),
-                end: currentDate.plusDays(match.round + 1).toString(),
+                start: currentDate.plusDays(match.roundIndex).toString(),
+                end: currentDate.plusDays(match.roundIndex + 1).toString(),
                 style: `background-color: ${match.classicMatch ? '#009E73' : '#0072B2'}; color: white`
             });
         }
@@ -149,24 +161,33 @@ function renderScheduleByTeam(schedule) {
 }
 
 function solve() {
-    $.post("/schedules", JSON.stringify(loadedSchedule), function (data) {
-        scheduleId = data;
-        refreshSolvingButtons(true);
-    }).fail(function (xhr, ajaxOptions, thrownError) {
-        showError("Start solving failed.", xhr);
-        refreshSolvingButtons(false);
-    }, "text");
+    $.getJSON("/v1/demo-data/BASIC", function (modelRequest) {
+        $.post("/v1/schedules", JSON.stringify(modelRequest), function (metadata) {
+            scheduleId = metadata.id;
+            refreshSolvingButtons(true);
+            if (autoRefreshIntervalId == null) {
+                autoRefreshIntervalId = setInterval(getStatus, 2000);
+            }
+        }).fail(function (xhr) {
+            showError("Start solving failed.", xhr);
+            refreshSolvingButtons(false);
+        });
+    }).fail(function (xhr) {
+        showError("Get demo data failed.", xhr);
+    });
 }
 
 function analyze() {
     new bootstrap.Modal("#scoreAnalysisModal").show()
     const scoreAnalysisModalContent = $("#scoreAnalysisModalContent");
     scoreAnalysisModalContent.children().remove();
-    if (loadedSchedule.score == null) {
+    if (loadedSchedule == null || loadedSchedule.score == null) {
         scoreAnalysisModalContent.text("No score to analyze yet, please first press the 'solve' button.");
+    } else if (scheduleId == null) {
+        scoreAnalysisModalContent.text("No solving job yet, please first press the 'solve' button.");
     } else {
         $('#scoreAnalysisScoreLabel').text(`(${loadedSchedule.score})`);
-        $.put("/schedules/analyze", JSON.stringify(loadedSchedule), function (scoreAnalysis) {
+        $.get(`/v1/schedules/${scheduleId}/score-analysis`, function (scoreAnalysis) {
             let constraints = scoreAnalysis.constraints;
             constraints.sort((a, b) => {
                 let aComponents = getScoreComponents(a.score), bComponents = getScoreComponents(b.score);
@@ -216,7 +237,7 @@ function analyze() {
 
                 let row = $(`<tr/>`);
                 row.append($(`<td/>`).html(icon))
-                    .append($(`<td/>`).text(constraintAnalysis.id).css({textAlign: 'left'}))
+                    .append($(`<td/>`).text(constraintAnalysis.name).css({textAlign: 'left'}))
                     .append($(`<td/>`).text(constraintAnalysis.type))
                     .append($(`<td/>`).html(`<b>${constraintAnalysis.matches.length}</b>`))
                     .append($(`<td/>`).text(constraintAnalysis.weight))
@@ -253,7 +274,7 @@ function refreshSolvingButtons(solving) {
         $("#solveButton").hide();
         $("#stopSolvingButton").show();
         if (autoRefreshIntervalId == null) {
-            autoRefreshIntervalId = setInterval(refreshSchedule, 2000);
+            autoRefreshIntervalId = setInterval(getStatus, 2000);
         }
     } else {
         $("#solveButton").show();
@@ -266,10 +287,10 @@ function refreshSolvingButtons(solving) {
 }
 
 function stopSolving() {
-    $.delete("/schedules/" + scheduleId, function () {
+    $.delete(`/v1/schedules/${scheduleId}`, function () {
         refreshSolvingButtons(false);
-        refreshSchedule();
-    }).fail(function (xhr, ajaxOptions, thrownError) {
+        getStatus();
+    }).fail(function (xhr) {
         showError("Stop solving failed.", xhr);
     });
 }
