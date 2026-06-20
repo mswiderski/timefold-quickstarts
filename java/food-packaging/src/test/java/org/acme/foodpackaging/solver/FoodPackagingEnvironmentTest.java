@@ -3,6 +3,7 @@ package org.acme.foodpackaging.solver;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import jakarta.inject.Inject;
 
@@ -10,9 +11,10 @@ import ai.timefold.solver.core.api.solver.Solver;
 import ai.timefold.solver.core.api.solver.SolverFactory;
 import ai.timefold.solver.core.config.solver.EnvironmentMode;
 import ai.timefold.solver.core.config.solver.SolverConfig;
+import ai.timefold.solver.service.definition.api.domain.ModelConfig;
 
 import org.acme.foodpackaging.domain.PackagingSchedule;
-import org.acme.foodpackaging.persistence.PackagingScheduleRepository;
+import org.acme.foodpackaging.service.PackagingScheduleModelConvertor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
@@ -20,12 +22,13 @@ import io.quarkus.test.junit.QuarkusTest;
 
 @QuarkusTest
 @EnabledIfSystemProperty(named = "slowly", matches = "true")
-class FoodPackingEnvironmentTest {
+class FoodPackagingEnvironmentTest {
 
     @Inject
     SolverConfig solverConfig;
+
     @Inject
-    PackagingScheduleRepository repository;
+    PackagingScheduleModelConvertor modelConvertor;
 
     @Test
     void solveFullAssert() {
@@ -38,17 +41,14 @@ class FoodPackingEnvironmentTest {
     }
 
     void solve(EnvironmentMode environmentMode) {
-        // Load the problem
-        PackagingSchedule problem = repository.read();
+        var input = SolverTestDataFactory.createProblem();
+        PackagingSchedule problem = modelConvertor.toSolverModel(input, ModelConfig.empty(), Optional.empty());
 
-        // Update the environment
         SolverConfig updatedConfig = solverConfig.copyConfig();
-        updatedConfig.withEnvironmentMode(environmentMode)
-                .withTerminationSpentLimit(Duration.ofSeconds(30))
+        updatedConfig.withEnvironmentMode(environmentMode).withTerminationSpentLimit(Duration.ofSeconds(30))
                 .getTerminationConfig().withBestScoreLimit(null);
         SolverFactory<PackagingSchedule> solverFactory = SolverFactory.create(updatedConfig);
 
-        // Solve the problem
         Solver<PackagingSchedule> solver = solverFactory.buildSolver();
         PackagingSchedule solution = solver.solve(problem);
         assertThat(solution.getScore()).isNotNull();
