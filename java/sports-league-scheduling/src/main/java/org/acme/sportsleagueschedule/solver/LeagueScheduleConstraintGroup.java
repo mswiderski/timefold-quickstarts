@@ -2,7 +2,7 @@ package org.acme.sportsleagueschedule.solver;
 
 import ai.timefold.solver.service.definition.api.description.ConstraintGroupInfo;
 
-public class LeagueScheduleConstraintGroup {
+public final class LeagueScheduleConstraintGroup {
 
     public static final ConstraintGroupInfo SCHEDULE_FEASIBILITY = new ConstraintGroupInfo("scheduleFeasibility",
             "Schedule feasibility",
@@ -21,4 +21,7 @@ public class LeagueScheduleConstraintGroup {
             "Schedule classic matches on weekends or holidays.",
             "IconStar",
             new String[] { ConstraintGroupTag.MATCH_IMPORTANCE.getTag() });
+
+    private LeagueScheduleConstraintGroup() {
+    }
 }
