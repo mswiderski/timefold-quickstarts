@@ -103,8 +103,6 @@ public final class DemoDataBuilder {
             String ingredient = INGREDIENT_LIST.get(i);
             int r = random.nextInt(INGREDIENT_LIST.size() - 4);
             String ingredientA = INGREDIENT_LIST.get((i + r + 1) % INGREDIENT_LIST.size());
-            String ingredientB = INGREDIENT_LIST.get((i + r + 2) % INGREDIENT_LIST.size());
-            String ingredientC = INGREDIENT_LIST.get((i + r + 3) % INGREDIENT_LIST.size());
             for (String productVariation : PRODUCT_VARIATION_LIST) {
                 String id = Long.toString(productId);
                 productId += 1;
@@ -117,10 +115,12 @@ public final class DemoDataBuilder {
             idToIngredients.put(idA, Set.of(ingredient, ingredientA));
             String idB = Long.toString(productId);
             productId += 1;
+            String ingredientB = INGREDIENT_LIST.get((i + r + 2) % INGREDIENT_LIST.size());
             idToName.put(idB, ingredient + " and " + ingredientB + " " + PRODUCT_VARIATION_LIST.get(2));
             idToIngredients.put(idB, Set.of(ingredient, ingredientB));
             String idC = Long.toString(productId);
             productId += 1;
+            String ingredientC = INGREDIENT_LIST.get((i + r + 3) % INGREDIENT_LIST.size());
             idToName.put(idC, ingredient + ", " + ingredientA + " and " + ingredientC + " "
                     + PRODUCT_VARIATION_LIST.get(1));
             idToIngredients.put(idC, Set.of(ingredient, ingredientA, ingredientC));

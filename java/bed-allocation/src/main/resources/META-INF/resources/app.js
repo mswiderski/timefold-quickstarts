@@ -1,3 +1,22 @@
+// ── Platform context ──
+// When embedded in the Timefold Platform, the iframe URL carries these query params.
+// Standalone (local dev), none are present and the app behaves as before.
+const PLATFORM = (function () {
+    const q = new URL(window.location.href).searchParams;
+    return {
+        onPlatform: q.has('onPlatform'),
+        runId: q.get('runId'),
+        // apiUrl: base URL of the model API on the platform (URL-encoded). Trailing slash stripped.
+        apiUrl: q.has('apiUrl') ? decodeURIComponent(q.get('apiUrl')).replace(/\/+$/, '') : null,
+        apiKey: q.has('apiKey') ? q.get('apiKey') : null,
+    };
+})();
+
+// Build an API URL: prefix the platform base when embedded, else root-relative (local dev).
+function api(path) {
+    return PLATFORM.apiUrl ? PLATFORM.apiUrl + path : path;
+}
+
 var autoRefreshIntervalId = null;
 
 const byRoomPanel = document.getElementById("byRoomPanel");
@@ -36,8 +55,35 @@ $(document).ready(function () {
     addExportDropdownItem();
 
     setupAjax();
-    getStatus();
+    if (PLATFORM.onPlatform) {
+        // Embedded: hide demo chrome (navbar + solve/score controls) and load the
+        // existing run read-only.
+        document.body.classList.add('on-platform');
+        loadPlatformRun();
+    } else {
+        // Standalone dev: load demo data, allow solving.
+        getStatus();
+    }
 });
+
+// ── Platform: load an existing run (read-only) ──
+// ModelRest exposes the run's input at /{id}/model-request (ModelRequest → {modelInput})
+// and its output+status at /{id} (ModelResponse → {metadata:{solverStatus}, modelOutput}).
+function loadPlatformRun() {
+    if (!PLATFORM.runId) {
+        showError("No runId provided by platform.", {status: 0, statusText: "missing runId"});
+        return;
+    }
+    jobId = PLATFORM.runId;
+    $.get(api(`/v1/schedules/${jobId}/model-request`), function (req) {
+        loadedSchedule = req.modelInput || req;
+        $('#exportData').attr('href', 'data:text/plain;charset=utf-8,' + JSON.stringify(loadedSchedule));
+        renderSchedule(loadedSchedule, 'NOT_SOLVING');
+        getStatus(); // fetch output + render; auto-polls while solving
+    }).fail(function (xhr) {
+        showError("Failed to load run input from platform.", xhr);
+    });
+}
 
 function addImportDropdownItem() {
     $("#testDataButton")
@@ -59,6 +105,8 @@ function setupAjax() {
     $.ajaxSetup({
         headers: {
             'Content-Type': 'application/json', 'Accept': 'application/json,text/plain', // plain text is required by solve() returning UUID of the solver job
+            // On the platform, authenticate every request with the supplied API key.
+            ...(PLATFORM.apiKey ? {'X-API-KEY': PLATFORM.apiKey} : {})
         }
     });
 
@@ -79,7 +127,7 @@ function setupAjax() {
 
 function getStatus() {
     if (jobId == null) {
-        $.get('/v1/demo-data/BASIC', function (data) {
+        $.get(api('/v1/demo-data/BASIC'), function (data) {
             loadedSchedule = data.modelInput;
             $('#exportData').attr('href', 'data:text/plain;charset=utf-8,' + JSON.stringify(loadedSchedule));
             renderSchedule(loadedSchedule, 'NOT_SOLVING');
@@ -88,7 +136,7 @@ function getStatus() {
             refreshSolvingButtons('NOT_SOLVING');
         });
     } else {
-        $.get(`/v1/schedules/${jobId}`, function (data) {
+        $.get(api(`/v1/schedules/${jobId}`), function (data) {
             const solverStatus = data.metadata.solverStatus;
             const solution = data.modelOutput || loadedSchedule;
             loadedSchedule = solution;
@@ -248,9 +296,9 @@ function renderScheduleByRoom(schedule) {
 }
 
 function solve() {
-    $.get('/v1/demo-data/BASIC', function (modelRequest) {
+    $.get(api('/v1/demo-data/BASIC'), function (modelRequest) {
         modelRequest.modelInput = loadedSchedule;
-        $.post('/v1/schedules', JSON.stringify(modelRequest), function (metadata) {
+        $.post(api('/v1/schedules'), JSON.stringify(modelRequest), function (metadata) {
             jobId = metadata.id;
             refreshSolvingButtons(metadata.solverStatus || 'SOLVING_ACTIVE');
             if (autoRefreshIntervalId == null) {
@@ -275,7 +323,7 @@ function analyze() {
         scoreAnalysisModalContent.text("No solving job yet, please first press the 'solve' button.");
     } else {
         $('#scoreAnalysisScoreLabel').text(`(${loadedSchedule.score})`);
-        $.get(`/v1/schedules/${jobId}/score-analysis`, function (scoreAnalysis) {
+        $.get(api(`/v1/schedules/${jobId}/score-analysis`), function (scoreAnalysis) {
             let constraints = scoreAnalysis.constraints;
             constraints.sort((a, b) => {
                 let aComponents = getScoreComponents(a.score), bComponents = getScoreComponents(b.score);
@@ -375,7 +423,7 @@ function refreshSolvingButtons(solverStatus) {
 }
 
 function stopSolving() {
-    $.delete(`/v1/schedules/${jobId}`, function () {
+    $.delete(api(`/v1/schedules/${jobId}`), function () {
         refreshSolvingButtons('NOT_SOLVING');
         getStatus();
     }).fail(function (xhr, ajaxOptions, thrownError) {

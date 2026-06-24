@@ -74,8 +74,6 @@ public final class DemoDataBuilder {
         int jobAreaTargetLimit = Math.min(jobTargetNames.length, crewCount * 2);
         Random random = new Random(RANDOM_SEED);
         for (int i = 0; i < jobListSize; i++) {
-            String jobArea = jobAreaNames[i / jobAreaTargetLimit];
-            String jobTarget = jobTargetNames[i % jobAreaTargetLimit];
             // 1 day to 2 workweeks (1 workweek on average)
             int durationInDays = 1 + random.nextInt(10);
             int minMaxBetweenWorkdays = durationInDays + 5 // at least 5 days of flexibility
@@ -85,6 +83,8 @@ public final class DemoDataBuilder {
             LocalDate minStartDate = Job.calculateEndDate(fromDate, minWorkdayOffset);
             LocalDate maxEndDate = Job.calculateEndDate(minStartDate, minMaxBetweenWorkdays);
             LocalDate idealEndDate = Job.calculateEndDate(minStartDate, minIdealEndBetweenWorkdays);
+            String jobArea = jobAreaNames[i / jobAreaTargetLimit];
+            String jobTarget = jobTargetNames[i % jobAreaTargetLimit];
             List<String> tags = random.nextDouble() < 0.1
                     ? List.of(jobArea, "Subway")
                     : List.of(jobArea);

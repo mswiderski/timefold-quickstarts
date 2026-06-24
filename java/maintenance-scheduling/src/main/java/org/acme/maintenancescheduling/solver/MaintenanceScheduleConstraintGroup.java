@@ -2,7 +2,7 @@ package org.acme.maintenancescheduling.solver;
 
 import ai.timefold.solver.service.definition.api.description.ConstraintGroupInfo;
 
-public class MaintenanceScheduleConstraintGroup {
+public final class MaintenanceScheduleConstraintGroup {
     public static final ConstraintGroupInfo CONFLICT_AVOIDANCE = new ConstraintGroupInfo("conflictAvoidance",
             "Conflict avoidance",
             "Ensure no crew is double-booked and overlapping jobs do not share tags.",
@@ -18,4 +18,7 @@ public class MaintenanceScheduleConstraintGroup {
             "Schedule jobs close to their ideal end date.",
             "IconUser",
             new String[] { ConstraintGroupTag.MAINTENANCE_PREFERENCES.getTag() });
+
+    private MaintenanceScheduleConstraintGroup() {
+    }
 }

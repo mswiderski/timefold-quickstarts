@@ -2,7 +2,7 @@ package org.acme.schooltimetabling.solver;
 
 import ai.timefold.solver.service.definition.api.description.ConstraintGroupInfo;
 
-public class TimetableConstraintGroup {
+public final class TimetableConstraintGroup {
     public static final ConstraintGroupInfo CONFLICT_AVOIDANCE = new ConstraintGroupInfo("conflictAvoidance",
             "Conflict avoidance",
             "Ensure no room, teacher or student group is double-booked in the same timeslot.",
@@ -18,4 +18,7 @@ public class TimetableConstraintGroup {
             "Spread the same subject out across a student group's day.",
             "IconBook",
             new String[] { ConstraintGroupTag.STUDENT_SATISFACTION.getTag() });
+
+    private TimetableConstraintGroup() {
+    }
 }

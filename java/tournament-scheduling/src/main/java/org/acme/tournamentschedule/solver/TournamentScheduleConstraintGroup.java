@@ -2,7 +2,7 @@ package org.acme.tournamentschedule.solver;
 
 import ai.timefold.solver.service.definition.api.description.ConstraintGroupInfo;
 
-public class TournamentScheduleConstraintGroup {
+public final class TournamentScheduleConstraintGroup {
     public static final ConstraintGroupInfo CONFLICT_AVOIDANCE = new ConstraintGroupInfo("conflictAvoidance",
             "Conflict avoidance",
             "Ensure a team plays at most once per day.",
@@ -18,4 +18,7 @@ public class TournamentScheduleConstraintGroup {
             "Balance the number of assignments per team and the confrontations between teams.",
             "IconBook",
             new String[] { ConstraintGroupTag.FAIRNESS.getTag() });
+
+    private TournamentScheduleConstraintGroup() {
+    }
 }

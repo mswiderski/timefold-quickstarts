@@ -1,3 +1,22 @@
+// ── Platform context ──
+// When embedded in the Timefold Platform, the iframe URL carries these query params.
+// Standalone (local dev), none are present and the app behaves as before.
+const PLATFORM = (function () {
+  const q = new URL(window.location.href).searchParams;
+  return {
+    onPlatform: q.has('onPlatform'),
+    runId: q.get('runId'),
+    // apiUrl: base URL of the model API on the platform (URL-encoded). Trailing slash stripped.
+    apiUrl: q.has('apiUrl') ? decodeURIComponent(q.get('apiUrl')).replace(/\/+$/, '') : null,
+    apiKey: q.has('apiKey') ? q.get('apiKey') : null,
+  };
+})();
+
+// Build an API URL: prefix the platform base when embedded, else root-relative (local dev).
+function api(path) {
+  return PLATFORM.apiUrl ? PLATFORM.apiUrl + path : path;
+}
+
 const colors = [
   'aqua',
   'aquamarine',
@@ -53,9 +72,32 @@ const createCostFormat = (notation) => new Intl.NumberFormat('en-US', {
 const shortCostFormat = createCostFormat('compact');
 const longCostFormat = createCostFormat('standard');
 
+// ── Platform: load an existing run (read-only) ──
+// ModelRest exposes the run's input at /{id}/model-request (ModelRequest → {modelInput})
+// and its output+status at /{id} (ModelResponse → {metadata:{solverStatus}, modelOutput}).
+const loadPlatformRun = () => {
+  if (!PLATFORM.runId) {
+    showError('No runId provided by platform.', {status: 0, statusText: 'missing runId'});
+    return;
+  }
+  jobId = PLATFORM.runId;
+  $.get(api(`/v1/facilitylocations/${jobId}/model-request`), (req) => {
+    const input = req.modelInput || req;
+    loadedSchedule = input;
+    showProblem({solution: input, scoreExplanation: null});
+    getStatus(); // fetch output + render
+    // Poll while the run is still solving; refreshSolvingButtons clears it on completion.
+    if (autoRefreshIntervalId == null) {
+      autoRefreshIntervalId = setInterval(autoRefresh, 1000);
+    }
+  }).fail((xhr) => {
+    showError('Failed to load run input from platform.', xhr);
+  });
+};
+
 const getStatus = () => {
   if (jobId == null) {
-    $.get('/v1/demo-data/BASIC', (data) => {
+    $.get(api('/v1/demo-data/BASIC'), (data) => {
       loadedSchedule = data.modelInput;
       showProblem({
         solution: data.modelInput,
@@ -65,7 +107,7 @@ const getStatus = () => {
       showError('Get demo data failed.', xhr);
     });
   } else {
-    $.get(`/v1/facilitylocations/${jobId}`, (data) => {
+    $.get(api(`/v1/facilitylocations/${jobId}`), (data) => {
       loadedSchedule = data.modelOutput;
       const solverStatus = data.metadata.solverStatus;
       showProblem({
@@ -80,8 +122,8 @@ const getStatus = () => {
 };
 
 const solve = () => {
-  $.get('/v1/demo-data/BASIC', (modelRequest) => {
-    $.post('/v1/facilitylocations', JSON.stringify(modelRequest), (metadata) => {
+  $.get(api('/v1/demo-data/BASIC'), (modelRequest) => {
+    $.post(api('/v1/facilitylocations'), JSON.stringify(modelRequest), (metadata) => {
       jobId = metadata.id;
       refreshSolvingButtons(metadata.solverStatus);
       if (autoRefreshIntervalId == null) {
@@ -94,7 +136,7 @@ const solve = () => {
 };
 
 const stopSolving = () => {
-  $.delete(`/v1/facilitylocations/${jobId}`, (data) => {
+  $.delete(api(`/v1/facilitylocations/${jobId}`), (data) => {
     refreshSolvingButtons('SOLVING_COMPLETED');
     getStatus();
   }).fail((xhr) => {
@@ -197,7 +239,7 @@ function analyze() {
     scoreAnalysisModalContent.text("No score to analyze yet, please first press the 'solve' button.");
   } else {
     $('#scoreAnalysisScoreLabel').text(`(${loadedSchedule.score})`);
-    $.get(`/v1/facilitylocations/${jobId}/score-analysis`, function (scoreAnalysis) {
+    $.get(api(`/v1/facilitylocations/${jobId}/score-analysis`), function (scoreAnalysis) {
       let constraints = scoreAnalysis.constraints;
       constraints.sort((a, b) => {
         let aComponents = getScoreComponents(a.score), bComponents = getScoreComponents(b.score);
@@ -277,6 +319,8 @@ function setupAjax() {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json,text/plain', // plain text is required by solve() returning UUID of the solver job
+      // On the platform, authenticate every request with the supplied API key.
+      ...(PLATFORM.apiKey ? {'X-API-KEY': PLATFORM.apiKey} : {})
     }
   });
 
@@ -301,8 +345,13 @@ function setupAjax() {
 
 setupAjax();
 
+// Embedded on the platform: hide the demo chrome and load the run read-only.
+if (PLATFORM.onPlatform) {
+  document.body.classList.add('on-platform');
+}
+
 const map = L.map('map', {doubleClickZoom: false}).setView([51.505, -0.09], 13);
-map.whenReady(getStatus);
+map.whenReady(PLATFORM.onPlatform ? loadPlatformRun : getStatus);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,

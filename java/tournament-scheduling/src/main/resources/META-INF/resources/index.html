@@ -3,8 +3,8 @@
   <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <title>Tournament Scheduling - Timefold Solver on Quarkus</title>
-  <link rel="stylesheet" href="/webjars/bootstrap/css/bootstrap.min.css"/>
-  <link rel="stylesheet" href="/webjars/font-awesome/css/all.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
   <link rel="icon" href="https://timefold.ai/uploads/images/Brand-Assets/timefold-solver-logomark.png" type="image/png">
   <style>
     :root {
@@ -17,10 +17,16 @@
     .nav-pills {
       --bs-nav-pills-link-active-bg: var(--ts-violet-1-rgb);
     }
+
+    /* Embedded on the Timefold Platform: hide the demo navbar + solve/score
+       controls so only the read-only schedule visualization remains. */
+    body.on-platform #appHeader,
+    body.on-platform #datasetInfo,
+    body.on-platform #solveControls { display: none !important; }
   </style>
 </head>
 <body>
-<header class="bg-white shadow">
+<header id="appHeader" class="bg-white shadow">
   <div class="container-fluid">
     <nav class="navbar navbar-expand-lg mb-3">
       <a class="navbar-brand" style="width: 200px;overflow: hidden;">
@@ -55,9 +61,9 @@
     <div class="sticky-top d-flex justify-content-center align-items-center" aria-live="polite" aria-atomic="true">
       <div id="notificationPanel" style="position: absolute; top: .5rem;"></div>
     </div>
-    <blockquote>Generate a fair tournament schedule for your teams. <span id="info" class="fw-bold"></span></blockquote>
+    <blockquote id="datasetInfo">Generate a fair tournament schedule for your teams. <span id="info" class="fw-bold"></span></blockquote>
 
-    <div class="mb-2">
+    <div id="solveControls" class="mb-2">
       <button id="solveButton" type="button" class="btn btn-success">
         <span class="fas fa-play"></span> Solve
       </button>
@@ -162,8 +168,8 @@
 </div>
 
 
-<script src="/webjars/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="/webjars/jquery/jquery.min.js"></script>
-<script src="/app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

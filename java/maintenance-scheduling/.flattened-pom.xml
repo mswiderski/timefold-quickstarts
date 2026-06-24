@@ -4,9 +4,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-        <groupId>ai.timefold.solver</groupId>
-        <artifactId>timefold-solver-service-parent</artifactId>
-    <version>2.2.0-timefold-1</version>
+    <groupId>ai.timefold.solver</groupId>
+    <artifactId>timefold-solver-service-parent</artifactId>
+    <version>2.2.0</version>
   </parent>
 
   <groupId>ai.timefold.model</groupId>
@@ -15,9 +15,9 @@
 
   <properties>
     <revision>1.0.0-SNAPSHOT</revision>
-    <error-prone.version>2.47.0</error-prone.version>
-    <jacoco.version>0.8.14</jacoco.version>
-    <frontend-maven-plugin.version>2.0.0</frontend-maven-plugin.version>
+    <error-prone.version>2.50.0</error-prone.version>
+    <jacoco.version>0.8.15</jacoco.version>
+    <frontend-maven-plugin.version>2.0.1</frontend-maven-plugin.version>
     <node.version>v24.14.0</node.version>
     <maven.compiler.release>25</maven.compiler.release>
   </properties>
@@ -54,7 +54,7 @@
     <dependency>
       <groupId>com.tngtech.archunit</groupId>
       <artifactId>archunit-junit5</artifactId>
-      <version>1.4.1</version>
+      <version>1.4.2</version>
       <scope>test</scope>
     </dependency>
 
@@ -78,7 +78,7 @@
     <dependency>
       <groupId>org.webjars</groupId>
       <artifactId>font-awesome</artifactId>
-      <version>7.1.0</version>
+      <version>7.2.0</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
@@ -92,12 +92,12 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>ai.timefold.sdk.tools</groupId>
+        <groupId>ai.timefold.solver</groupId>
         <artifactId>timefold-maven-plugin</artifactId>
-        <version>0.71.0</version>
+        <version>${project.parent.version}</version>
         <configuration>
           <platformUrl>https://sandbox.timefold.dev</platformUrl>
-          <key>ess-demo-v7</key>
+          <key>maintenance-scheduling</key>
           <tenants>
             <tenant>dc6f4fa5-5f53-4f00-abac-464a6fca24d7</tenant>
           </tenants>
@@ -148,7 +148,7 @@
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>3.7.0</version>
         <configuration>
           <java>
             <eclipse>
@@ -269,19 +269,6 @@
       </plugin>
 
       <plugin>
-        <groupId>org.openapitools</groupId>
-        <artifactId>openapi-generator-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>validate-openapi</id>
-            <configuration>
-              <skipValidateSpec>true</skipValidateSpec>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
         <groupId>com.github.eirslett</groupId>
         <artifactId>frontend-maven-plugin</artifactId>
         <version>${frontend-maven-plugin.version}</version>
@@ -306,7 +293,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>3.5.0</version>
+        <version>3.6.3</version>
         <executions>
           <execution>
             <id>report-coverage</id>
@@ -393,6 +380,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
+        <version>3.5.0</version>
         <executions>
           <execution>
             <id>copy-openapi-json</id>
@@ -419,7 +407,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-pmd-plugin</artifactId>
-        <version>3.24.0</version>
+        <version>3.28.0</version>
         <configuration>
           <rulesets>
             <ruleset>${project.basedir}/.pmd-ruleset.xml</ruleset>
@@ -443,12 +431,12 @@
           <dependency>
             <groupId>net.sourceforge.pmd</groupId>
             <artifactId>pmd-core</artifactId>
-            <version>7.21.0</version>
+            <version>7.25.0</version>
           </dependency>
           <dependency>
             <groupId>net.sourceforge.pmd</groupId>
             <artifactId>pmd-java</artifactId>
-            <version>7.21.0</version>
+            <version>7.25.0</version>
           </dependency>
         </dependencies>
       </plugin>

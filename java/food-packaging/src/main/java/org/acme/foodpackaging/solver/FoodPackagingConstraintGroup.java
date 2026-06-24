@@ -2,7 +2,7 @@ package org.acme.foodpackaging.solver;
 
 import ai.timefold.solver.service.definition.api.description.ConstraintGroupInfo;
 
-public class FoodPackagingConstraintGroup {
+public final class FoodPackagingConstraintGroup {
     public static final ConstraintGroupInfo SCHEDULE_FEASIBILITY = new ConstraintGroupInfo("scheduleFeasibility",
             "Schedule feasibility",
             "Keep jobs within their deadline and avoid operators cleaning two lines at once.",
@@ -18,4 +18,7 @@ public class FoodPackagingConstraintGroup {
             "Minimise the total production span across all lines.",
             "IconBolt",
             new String[] { ConstraintGroupTag.PRODUCTION_EFFICIENCY.getTag() });
+
+    private FoodPackagingConstraintGroup() {
+    }
 }

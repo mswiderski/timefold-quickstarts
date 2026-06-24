@@ -2,7 +2,7 @@ package org.acme.employeescheduling.solver;
 
 import ai.timefold.solver.service.definition.api.description.ConstraintGroupInfo;
 
-public class EmployeeScheduleConstraintGroup {
+public final class EmployeeScheduleConstraintGroup {
 
     public static final ConstraintGroupInfo SHIFT_COVERAGE = new ConstraintGroupInfo("shiftCoverage",
             "Shift coverage",
@@ -21,4 +21,7 @@ public class EmployeeScheduleConstraintGroup {
             "Distribute shifts fairly across all employees.",
             "IconScale",
             new String[] { ConstraintGroupTag.WORKLOAD_BALANCE.getTag() });
+
+    private EmployeeScheduleConstraintGroup() {
+    }
 }

@@ -2,7 +2,7 @@ package org.acme.bedallocation.solver;
 
 import ai.timefold.solver.service.definition.api.description.ConstraintGroupInfo;
 
-public class BedScheduleConstraintGroup {
+public final class BedScheduleConstraintGroup {
     public static final ConstraintGroupInfo BED_OCCUPANCY = new ConstraintGroupInfo("bedOccupancy",
             "Bed occupancy",
             "Ensure each bed holds at most one patient per night and that every patient gets a bed.",
@@ -18,4 +18,7 @@ public class BedScheduleConstraintGroup {
             "Honour patient preferences for room capacity, specialty and equipment.",
             "IconUser",
             new String[] { ConstraintGroupTag.PATIENT_COMFORT.getTag() });
+
+    private BedScheduleConstraintGroup() {
+    }
 }

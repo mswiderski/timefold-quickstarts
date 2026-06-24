@@ -109,7 +109,6 @@ public class FacilityLocationProblem implements SolverModel<HardMediumSoftScore>
     @Override
     public FacilityLocationOutputMetrics getOutputMetrics() {
         int activatedFacilities = (int) facilities.stream().filter(Facility::isUsed).count();
-        int unusedFacilities = facilities.size() - activatedFacilities;
         int assignedConsumers = (int) consumers.stream().filter(Consumer::isAssigned).count();
         int unassignedConsumers = consumers.size() - assignedConsumers;
         long totalTravelDistanceMeters =
@@ -126,6 +125,7 @@ public class FacilityLocationProblem implements SolverModel<HardMediumSoftScore>
                 ? null
                 : Math.round((double) activatedUsedCapacity / activatedCapacity * 10_000.0) / 100.0;
 
+        int unusedFacilities = facilities.size() - activatedFacilities;
         return new FacilityLocationOutputMetrics(activatedFacilities, unusedFacilities, getTotalCost(),
                 assignedConsumers, unassignedConsumers, totalTravelDistanceMeters,
                 averageTravelDistanceMetersPerConsumer, capacityUtilizationPercentage);

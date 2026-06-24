@@ -38,10 +38,13 @@ class MaintenanceScheduleConstraintProviderTest {
 
     @Test
     void crewConflict() {
-        Job job1 = job("1", CREW1, DAY_1, DAY_10, DAY_5, DAY_1, 4, tags("A"));
-        Job job2 = job("2", CREW1, DAY_1, DAY_10, DAY_5, DAY_3, 4, tags("B"));
+        // Three overlapping jobs for the same crew so the penalty weigher exercises both
+        // branches of its start/end date ternaries.
+        Job job1 = job("1", CREW1, DAY_1, DAY_10, DAY_5, DAY_5, 1, tags("A"));
+        Job job2 = job("2", CREW1, DAY_1, DAY_10, DAY_5, DAY_1, 9, tags("B"));
+        Job job3 = job("3", CREW1, DAY_1, DAY_10, DAY_5, DAY_1, 9, tags("C"));
         constraintVerifier.verifyThat(MaintenanceScheduleConstraintProvider::crewConflict)
-                .given(job1, job2)
+                .given(job1, job2, job3)
                 .penalizesByMoreThan(0);
     }
 
@@ -79,10 +82,13 @@ class MaintenanceScheduleConstraintProviderTest {
 
     @Test
     void tagConflict() {
-        Job job1 = job("1", CREW1, DAY_1, DAY_10, DAY_10, DAY_1, 6, tags("Downtown"));
-        Job job2 = job("2", CREW2, DAY_1, DAY_10, DAY_10, DAY_3, 6, tags("Downtown"));
+        // Three overlapping jobs sharing a tag so the penalty weigher exercises both
+        // branches of its start/end date ternaries.
+        Job job1 = job("1", CREW1, DAY_1, DAY_10, DAY_10, DAY_5, 1, tags("Downtown"));
+        Job job2 = job("2", CREW2, DAY_1, DAY_10, DAY_10, DAY_1, 9, tags("Downtown"));
+        Job job3 = job("3", CREW2, DAY_1, DAY_10, DAY_10, DAY_1, 9, tags("Downtown"));
         constraintVerifier.verifyThat(MaintenanceScheduleConstraintProvider::tagConflict)
-                .given(job1, job2)
+                .given(job1, job2, job3)
                 .penalizesByMoreThan(0);
     }
 }
